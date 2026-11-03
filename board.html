@@ -232,7 +232,7 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
   function render(d) {
     var D = d.district;
     var N = d.names || { rep: 'Smith', gov: 'Benson', sen: 'El-Sayed', govRace: 'Governor', demo: '' };
-    setText('repName', N.rep); setText('repTotalTh', N.rep + ' Total'); setText('boardSub', N.demo || 'Election night results board'); $('boardSub').style.color = N.demo ? 'var(--rep)' : '';
+    setText('repName', N.rep); setText('repTotalTh', N.rep + ' Total'); setText('boardSub', (N.demo || 'Election night results board') + (d.sheet && d.sheet.name ? ' \u00b7 reading: ' + d.sheet.name : '')); $('boardSub').style.color = N.demo ? 'var(--rep)' : '';
     // hero
     var who = D.fromSheet === false ? ['Total row not found in the sheet', 'neu'] : (D.reported === 0 || D.marginPct === null) ? ['Awaiting first returns', 'neu'] : D.marginPct > 0.001 ? ['McDonald Rivet leads', 'dem'] : D.marginPct < -0.001 ? [N.rep + ' leads', 'rep'] : ['Even', 'neu'];
     setText('who', who[0]); $('who').className = 'who ' + who[1];
@@ -329,11 +329,13 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
   // Served by Apps Script: google.script.run. Hosted elsewhere (GitHub Pages): the script's JSON API, fetched without
   // Google cookies, so a browser signed into several Google accounts never hits Google's account chooser.
   var API = (function () { try { return new URLSearchParams(location.search).get('api') || window.DEFAULT_API || ''; } catch (e) { return window.DEFAULT_API || ''; } })();
+  // ?sheet=<Google Sheet id or link>: read that copy of the tracker instead (a parallel board, e.g. on the hand-typed sheet)
+  var SHEET = (function () { try { var v = new URLSearchParams(location.search).get('sheet') || ''; var m = v.match(/[-\w]{25,}/); return m ? m[0] : ''; } catch (e) { return ''; } })();
   function load() {
     if (window.google && google.script && google.script.run) {
       google.script.run.withSuccessHandler(function (d) { failures = 0; render(d); }).withFailureHandler(function (e) { failures++; setText('updated', 'Refresh failed (' + failures + '): ' + (e && e.message ? e.message : e)); }).getBoardData();
     } else if (API && !window.BOARD_DEMO) {
-      fetch(API + '?api=board&_=' + Date.now(), { credentials: 'omit' }).then(function (r) { return r.json(); }).then(function (d) { failures = 0; render(d); }).catch(function (e) { failures++; setText('updated', 'Refresh failed (' + failures + '): ' + e); });
+      fetch(API + '?api=board' + (SHEET ? '&sheet=' + encodeURIComponent(SHEET) : '') + '&_=' + Date.now(), { credentials: 'omit' }).then(function (r) { return r.json(); }).then(function (d) { failures = 0; render(d); }).catch(function (e) { failures++; setText('updated', 'Refresh failed (' + failures + '): ' + e); });
     } else if (window.BOARD_DEMO) { render(window.BOARD_DEMO); }
   }
   var setTv = function (on) { document.body.classList.toggle('tv', on); $('tv').textContent = on ? 'Desktop size' : 'TV size'; try { localStorage.setItem('boardTv', on ? '1' : '0'); } catch (e) {} };
