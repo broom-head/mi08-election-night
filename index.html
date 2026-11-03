@@ -47,20 +47,15 @@ details summary{cursor:pointer;color:var(--t2);font-weight:600}
   <div class="right"><span class="status" id="updated"></span><button class="ghost small" id="theme" type="button">Light mode</button></div>
 </div>
 
-<section class="card"><h2>How it works, in plain terms</h2>
+<section class="card"><h2>Where the numbers land</h2><div class="links" id="links"></div></section>
+
+<section class="card"><h2>How it works</h2>
 <div class="steps">
 <div class="step"><b>1. The counties publish results</b><small>Each county clerk posts election-night numbers on its own website, in its own format. Saginaw, Midland, Genesee, Oakland and Macomb use results websites that also publish the numbers as a <em>machine-readable data file</em> (called JSON: the same numbers a person sees on the page, but in a form a program can read exactly). Tuscola posts a <em>plain web page</em> (HTML) with a table of precinct results. Bay posts a <em>PDF</em> with every precinct, the kind of document a clerk prints.</small></div>
 <div class="step"><b>2. A laptop collects them</b><small>A small program on John's laptop (the <em>relay</em>) visits every county site once a minute, the way a browser would, keeps only what has changed since last time, and sends it all in one package to the poller. On election night the Mac's scheduler (launchd) starts it automatically every minute. Pressing <em>Run now</em> below asks for an extra pass right away.</small></div>
 <div class="step"><b>3. The poller writes the sheet</b><small>The <em>poller</em> is a Google Apps Script, a program that lives inside Google and is allowed to edit the tracker sheet. It reads each county's numbers, matches each county precinct to its row in the tracker, writes election-day, absentee and early-vote counts for each candidate, then <em>re-reads every cell it wrote</em> to confirm it landed. Numbers typed by hand from tapes are never overwritten. Every run is written to a log sheet.</small></div>
 <div class="step"><b>4. The sheet and the board update</b><small>The tracker's own formulas (benchmarks, dashboard, margins) recalculate as cells land. The results board reads the sheet every minute and shows the same numbers in a bigger, clearer form.</small></div>
 </div></section>
-
-<section class="card"><h2>Where the numbers land</h2><div class="links" id="links"></div></section>
-
-<section class="card"><h2>Where the numbers come from</h2>
-<table><thead><tr><th>County</th><th>What it is</th><th>Link</th></tr></thead><tbody id="sources"></tbody></table>
-<div class="hint" id="srcHint"></div>
-</section>
 
 <section class="card"><h2>Run and status</h2>
 <div class="bar"><button id="run" type="button">Run now</button><span class="status" id="runStatus">Idle</span></div>
@@ -72,11 +67,18 @@ details summary{cursor:pointer;color:var(--t2);font-weight:600}
 <section class="card"><h2>Log</h2>
 <div class="tabs"><button class="on" id="tabPlain" type="button">Plain English</button><button id="tabTech" type="button">Technical</button></div>
 <div id="plainLog" class="plain"></div>
+<div class="hint" id="logLink" style="margin:0 0 8px"></div>
 <div id="techLog" style="display:none">
   <div class="hint" style="margin:0 0 8px">Poller run log (newest first), then the laptop relay's last lines. Copy and paste this to John if something looks wrong.</div>
   <pre id="techPre">loading…</pre>
 </div>
 </section>
+
+<section class="card"><h2>Where the numbers come from</h2>
+<table><thead><tr><th>County</th><th>What it is</th><th>Link</th></tr></thead><tbody id="sources"></tbody></table>
+<div class="hint" id="srcHint"></div>
+</section>
+
 
 <section class="card" id="settings"><h2>Settings: the input sheet and the sources</h2>
 <div class="hint" style="margin:0 0 12px">Changing anything here needs the admin key (the token at the end of John's run-now bookmark). The key stays in this browser only. Changes take effect at once: the poller and board switch sheets immediately, and the laptop relay picks up a new source on its next check-in (within a minute).</div>
@@ -117,8 +119,8 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
     L += '<a href="' + esc(d.sheet.url) + '" target="_blank">Open the tracker sheet <span>' + esc(d.sheet.name) + '</span></a>';
     var boardHref = inApps ? d.boardUrl : ('board.html' + (API && API !== window.DEFAULT_API ? '?api=' + encodeURIComponent(API) : ''));
     L += '<a href="' + esc(boardHref) + '" target="_blank">Open the results board <span>reads the sheet every minute</span></a>';
-    if (d.logUrl) L += '<a href="' + esc(d.logUrl) + '" target="_blank">Open the poller log <span>every run, tape checks, AI audit</span></a>';
     $('links').innerHTML = L;
+    $('logLink').innerHTML = d.logUrl ? 'This box shows the last 40 runs. The complete record is a Google Sheet, <a href="' + esc(d.logUrl) + '" target="_blank" style="color:var(--accent)">the poller log</a>: every run since the start, the tape-versus-county checks, and the AI audit notes. You only need it if something has to be traced back.' : '';
     $('curSheet').textContent = d.sheet.name + ' (' + d.sheet.id + ')';
     if (d.headers) { $('hdrCheck').textContent = d.headers.text; $('hdrCheck').style.color = d.headers.ok ? 'var(--ok)' : (d.headers.missing && d.headers.missing.length ? 'var(--bad)' : 'var(--warn)'); }
     $('sources').innerHTML = d.sources.map(function (s) { return '<tr><td><b>' + esc(s.county) + '</b></td><td>' + esc(s.how) + (s.note ? '<div class="hint">' + esc(s.note) + '</div>' : '') + '</td><td>' + (s.url ? '<a href="' + esc(s.url) + '" target="_blank">' + esc(s.url.replace(/^https?:\/\//, '').slice(0, 70)) + '</a>' : '<span class="hint">none</span>') + '</td></tr>'; }).join('');
