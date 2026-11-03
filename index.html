@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MI-08 Poller Console</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#0f1218;--surface:#171b24;--surface2:#1f2530;--border:#2a303d;--t1:#eef0f4;--t2:#9aa3b2;--dem:#4f8bff;--rep:#f0605a;--ok:#4fc3a1;--warn:#e0b14a;--bad:#f0605a;--accent:#4f8bff;--mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;color-scheme:dark}
+:root[data-theme="light"]{--bg:#f4f5f8;--surface:#fff;--surface2:#eef0f4;--border:#dcdfe6;--t1:#14171f;--t2:#5a6170;--dem:#1f5fbf;--rep:#c23b3b;--ok:#1e8a4c;--warn:#b7791f;--bad:#c23b3b;--accent:#1f5fbf;color-scheme:light}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--t1)}body{font:15px/1.5 'IBM Plex Sans',system-ui,sans-serif;padding:24px 16px 48px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:18px}
+h1{font-size:26px;margin:0;letter-spacing:-.01em}h2{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--t2);margin:0 0 10px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+.hdr{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:flex-start}.sub{color:var(--t2);max-width:70ch}
+.badge{display:inline-block;padding:3px 9px;border-radius:999px;font-weight:600;font-size:12px;border:1px solid}
+.badge.demo{background:rgba(194,59,59,.12);color:var(--rep);border-color:rgba(194,59,59,.35)}.badge.live{background:rgba(79,139,255,.12);color:var(--dem);border-color:rgba(79,139,255,.35)}
+.right{display:flex;gap:10px;align-items:center}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:8px}
+.step{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:var(--surface2)}.step b{display:block;margin-bottom:4px}.step small{color:var(--t2);display:block;line-height:1.45}
+.step em{font-style:normal;color:var(--t1);font-weight:500}
+.links{display:flex;flex-wrap:wrap;gap:10px}.links a{display:inline-flex;flex-direction:column;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--t1);text-decoration:none;font-weight:600}
+.links a:hover{border-color:var(--accent)}.links a span{font-weight:400;color:var(--t2);font-size:13px}
+table{width:100%;border-collapse:collapse}th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--t2);padding:6px 8px;border-bottom:1px solid var(--border)}td{padding:8px;border-bottom:1px solid var(--border);vertical-align:top}td a{color:var(--accent);word-break:break-all}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+button{padding:10px 16px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;font:600 15px 'IBM Plex Sans',sans-serif;cursor:pointer}button[disabled]{opacity:.5;cursor:wait}
+button.ghost{background:transparent;color:var(--t1);border-color:var(--border)}button.small{padding:6px 10px;font-size:13px}
+.status{font-weight:600}.status.ok{color:var(--ok)}.status.bad{color:var(--bad)}.status.run{color:var(--warn)}
+.counties{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px}
+.cty{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--surface2)}.cty .n{font-weight:600;display:flex;align-items:center;gap:8px}.cty .s{font-size:13px;color:var(--t2);margin-top:4px;line-height:1.4}.cty .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--border)}
+.cty.ok .dot{background:var(--ok)}.cty.bad .dot{background:var(--bad)}.cty.warn .dot{background:var(--warn)}.cty .tech{display:none;font:11.5px var(--mono);color:var(--t2);margin-top:8px;word-break:break-word}.cty.open .tech{display:block}
+.cty ul{margin:6px 0 0;padding-left:16px;display:grid;gap:3px}.cty li{font-size:13.5px;line-height:1.4;color:var(--t2)}.cty li:first-child{color:var(--t1);font-weight:500}.cty.bad li.issue,.cty.warn li.issue{color:var(--t1)}
+.cty .n .st{margin-left:auto;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--t2)}.cty.ok .n .st{color:var(--ok)}.cty.warn .n .st{color:var(--warn)}.cty.bad .n .st{color:var(--bad)}
+.tabs{display:flex;gap:6px;margin-bottom:10px}.tabs button{background:transparent;color:var(--t2);border-color:var(--border)}.tabs button.on{background:var(--surface2);color:var(--t1)}
+.plain{display:grid;gap:6px}.plain .row{display:grid;grid-template-columns:72px 1fr;gap:10px;padding:8px 10px;border-radius:8px;background:var(--surface2);border-left:3px solid var(--border)}.plain .row.ok{border-left-color:var(--ok)}.plain .row.bad{border-left-color:var(--bad)}.plain .row.warn{border-left-color:var(--warn)}.plain .t{color:var(--t2);font-size:13px}
+pre{margin:0;background:#0b0e13;color:#d7dbe4;border-radius:10px;padding:14px;font:12px/1.5 var(--mono);max-height:420px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.admin{display:grid;grid-template-columns:160px 1fr auto;gap:8px 12px;align-items:center}.admin input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--t1);font:13px var(--mono)}.admin small{grid-column:2/4;color:var(--t2);margin-top:-4px}
+.hint{color:var(--t2);font-size:13px;margin-top:8px}
+details summary{cursor:pointer;color:var(--t2);font-weight:600}
+@media (max-width:640px){.admin{grid-template-columns:1fr}.admin small{grid-column:1}.plain .row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="hdr">
+  <div><h1>MI-08 county results poller</h1><div class="sub" id="subline">Loading&hellip;</div><div style="margin-top:8px"><span class="badge live" id="mode">&nbsp;</span></div></div>
+  <div class="right"><span class="status" id="updated"></span><button class="ghost small" id="theme" type="button">Light mode</button></div>
+</div>
+
+<section class="card"><h2>How it works, in plain terms</h2>
+<div class="steps">
+<div class="step"><b>1. The counties publish results</b><small>Each county clerk posts election-night numbers on its own website, in its own format. Saginaw, Midland, Genesee, Oakland and Macomb use results websites that also publish the numbers as a <em>machine-readable data file</em> (called JSON: the same numbers a person sees on the page, but in a form a program can read exactly). Tuscola posts a <em>plain web page</em> (HTML) with a table of precinct results. Bay posts a <em>PDF</em> with every precinct, the kind of document a clerk prints.</small></div>
+<div class="step"><b>2. A laptop collects them</b><small>A small program on John's laptop (the <em>relay</em>) visits every county site once a minute, the way a browser would, keeps only what has changed since last time, and sends it all in one package to the poller. On election night the Mac's scheduler (launchd) starts it automatically every minute. Pressing <em>Run now</em> below asks for an extra pass right away.</small></div>
+<div class="step"><b>3. The poller writes the sheet</b><small>The <em>poller</em> is a Google Apps Script, a program that lives inside Google and is allowed to edit the tracker sheet. It reads each county's numbers, matches each county precinct to its row in the tracker, writes election-day, absentee and early-vote counts for each candidate, then <em>re-reads every cell it wrote</em> to confirm it landed. Numbers typed by hand from tapes are never overwritten. Every run is written to a log sheet.</small></div>
+<div class="step"><b>4. The sheet and the board update</b><small>The tracker's own formulas (benchmarks, dashboard, margins) recalculate as cells land. The results board reads the sheet every minute and shows the same numbers in a bigger, clearer form.</small></div>
+</div></section>
+
+<section class="card"><h2>Where the numbers land</h2><div class="links" id="links"></div></section>
+
+<section class="card"><h2>Where the numbers come from</h2>
+<table><thead><tr><th>County</th><th>What it is</th><th>Link</th></tr></thead><tbody id="sources"></tbody></table>
+<div class="hint" id="srcHint"></div>
+</section>
+
+<section class="card"><h2>Run and status</h2>
+<div class="bar"><button id="run" type="button">Run now</button><span class="status" id="runStatus">Idle</span></div>
+<div class="hint">Run now asks the poller for a full pass immediately and tells the laptop relay to re-pull every county on its next check-in (within a minute). Otherwise everything runs on its own, once a minute.</div>
+<div class="counties" id="counties"></div>
+<div class="hint">Green: numbers flowing, no problems. Amber: something to be aware of, numbers still landing. Red: that county is not updating; read the note. Click a card for the technical detail.</div>
+</section>
+
+<section class="card"><h2>Log</h2>
+<div class="tabs"><button class="on" id="tabPlain" type="button">Plain English</button><button id="tabTech" type="button">Technical</button></div>
+<div id="plainLog" class="plain"></div>
+<div id="techLog" style="display:none">
+  <div class="hint" style="margin:0 0 8px">Poller run log (newest first), then the laptop relay's last lines. Copy and paste this to John if something looks wrong.</div>
+  <pre id="techPre">loading…</pre>
+</div>
+</section>
+
+<section class="card" id="settings"><h2>Settings: the input sheet and the sources</h2>
+<div class="hint" style="margin:0 0 12px">Changing anything here needs the admin key (the token at the end of John's run-now bookmark). The key stays in this browser only. Changes take effect at once: the poller and board switch sheets immediately, and the laptop relay picks up a new source on its next check-in (within a minute).</div>
+<div class="admin">
+  <label>Admin key</label><input id="key" type="password" autocomplete="off" placeholder="paste the run-now key"><span></span>
+  <label>Input sheet</label><input id="sheetRef" placeholder="paste the Google Sheet link or id of the tracker to read and write"><button class="small" id="setSheet" type="button">Switch sheet</button>
+  <small>Now using: <span id="curSheet"></span>. The sheet must contain the tracker tab with the same column headers; the switch is refused otherwise.</small>
+  <label>Saginaw election</label><input id="ovSaginaw" placeholder="election page link or id on app.enhancedvoting.com (blank = built-in)"><span></span>
+  <label>Midland election</label><input id="ovMidland" placeholder="election page link or id on app.enhancedvoting.com (blank = built-in)"><span></span>
+  <label>Genesee folder</label><input id="ovGenesee" placeholder="Clarity election folder link (blank = built-in)"><span></span>
+  <label>Tuscola page</label><input id="ovTuscola" placeholder="ticker page link (blank = built-in)"><span></span>
+  <label>Bay PDF link</label><input id="ovBay" placeholder="direct link to the precinct PDF (blank = the relay finds it on the clerk's page)"><button class="small" id="setOv" type="button">Save sources</button>
+  <small>Oakland and Macomb (county totals for the watch races) are fixed. A blank field means the built-in address shown in the table above.</small>
+</div>
+<div class="status" id="adminStatus" style="margin-top:8px"></div>
+</section>
+</div>
+<script>
+window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR05x0ZJX5lozPEt4mg5apxmh-ATexH_06JlF2bbmP7mWTi5y2Psg/exec';
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var D = null, running = false, tech = false;
+  var esc = function (s) { return String(s === null || s === undefined ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
+  var fmt = function (n) { return (n === null || n === undefined || isNaN(n)) ? '–' : Math.round(n).toLocaleString('en-US'); };
+  // theme: dark by default; the choice is remembered in this browser
+  var setTheme = function (t) { document.documentElement.setAttribute('data-theme', t); $('theme').textContent = t === 'light' ? 'Dark mode' : 'Light mode'; try { localStorage.setItem('consoleTheme', t); } catch (e) {} };
+  try { setTheme(localStorage.getItem('consoleTheme') === 'light' ? 'light' : 'dark'); } catch (e) { setTheme('dark'); }
+  $('theme').onclick = function () { setTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'); };
+  try { $('key').value = localStorage.getItem('consoleKey') || ''; } catch (e) {}
+  $('key').onchange = function () { try { localStorage.setItem('consoleKey', $('key').value); } catch (e) {} };
+
+  function render(d) {
+    D = d;
+    $('subline').textContent = d.subline;
+    $('mode').textContent = d.modeLabel; $('mode').className = 'badge ' + (d.demo ? 'demo' : 'live');
+    $('updated').textContent = 'Updated ' + d.generatedLocal;
+    var L = '';
+    L += '<a href="' + esc(d.sheet.url) + '" target="_blank">Open the tracker sheet <span>' + esc(d.sheet.name) + '</span></a>';
+    var boardHref = inApps ? d.boardUrl : ('board.html' + (API && API !== window.DEFAULT_API ? '?api=' + encodeURIComponent(API) : ''));
+    L += '<a href="' + esc(boardHref) + '" target="_blank">Open the results board <span>reads the sheet every minute</span></a>';
+    if (d.logUrl) L += '<a href="' + esc(d.logUrl) + '" target="_blank">Open the poller log <span>every run, tape checks, AI audit</span></a>';
+    $('links').innerHTML = L;
+    $('curSheet').textContent = d.sheet.name + ' (' + d.sheet.id + ')';
+    $('sources').innerHTML = d.sources.map(function (s) { return '<tr><td><b>' + esc(s.county) + '</b></td><td>' + esc(s.how) + (s.note ? '<div class="hint">' + esc(s.note) + '</div>' : '') + '</td><td>' + (s.url ? '<a href="' + esc(s.url) + '" target="_blank">' + esc(s.url.replace(/^https?:\/\//, '').slice(0, 70)) + '</a>' : '<span class="hint">none</span>') + '</td></tr>'; }).join('');
+    $('srcHint').textContent = d.sourceHint || '';
+    [['ovBay', 'bay_pdf'], ['ovTuscola', 'tuscola'], ['ovGenesee', 'genesee'], ['ovSaginaw', 'saginaw_election'], ['ovMidland', 'midland_election']].forEach(function (p) { var el = $(p[0]); if (!el.dataset.ph) el.dataset.ph = el.placeholder; el.placeholder = d.overrides[p[1]] ? 'set: ' + d.overrides[p[1]] : el.dataset.ph; });
+    var stWord = { ok: 'OK', warn: 'Note', bad: 'Problem', none: 'Waiting' };
+    $('counties').innerHTML = d.counties.map(function (c) {
+      var lines = c.lines || [c.plain];
+      return '<div class="cty ' + c.state + '" data-c="' + esc(c.county) + '"><div class="n"><span class="dot"></span>' + esc(c.county) + '<span class="st">' + (stWord[c.state] || '') + '</span></div><ul>' +
+        lines.map(function (l, i) { return '<li class="' + (i > 0 && /not in the sheet|could not|held back|has not|went down|differently|skipped|read back/i.test(l) ? 'issue' : '') + '">' + esc(l) + '</li>'; }).join('') + '</ul><div class="tech">' + esc(c.technical) + '</div></div>';
+    }).join('');
+    Array.prototype.forEach.call(document.querySelectorAll('.cty'), function (el) { el.onclick = function () { el.classList.toggle('open'); }; });
+    if (!running) { var hb = d.heartbeat; $('runStatus').textContent = hb.alive ? 'Pipeline running (relay checked in ' + hb.ageMin + ' min ago)' : 'Relay not heard from' + (hb.ageMin === null ? ' yet' : ' for ' + hb.ageMin + ' min'); $('runStatus').className = 'status ' + (hb.alive ? 'ok' : 'bad'); }
+    $('plainLog').innerHTML = d.runs.length ? d.runs.map(function (r) { return '<div class="row ' + r.state + '"><div class="t">' + esc(r.at) + '</div><div>' + esc(r.plain) + '</div></div>'; }).join('') : '<div class="hint">No runs logged yet.</div>';
+    var t = '== Poller runs (newest first)\n' + d.runsRaw.join('\n') + '\n\n== Laptop relay, last lines\n' + (d.relayLog.length ? d.relayLog.join('\n') : '(nothing received yet)');
+    $('techPre').textContent = t;
+  }
+  // Served by Apps Script: google.script.run. Hosted elsewhere (GitHub Pages): the script's JSON API, called without
+  // Google cookies, so a browser signed into several Google accounts never hits Google's account chooser.
+  var API = (function () { try { return new URLSearchParams(location.search).get('api') || window.DEFAULT_API || ''; } catch (e) { return window.DEFAULT_API || ''; } })();
+  var inApps = !!(window.google && google.script && google.script.run);
+  var apiPost = function (payload) { return fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload), credentials: 'omit' }).then(function (r) { return r.json(); }); };
+  function load() {
+    if (inApps) {
+      google.script.run.withSuccessHandler(render).withFailureHandler(function (e) { $('updated').textContent = 'Refresh failed: ' + (e && e.message ? e.message : e); }).getConsoleData();
+    } else if (API) {
+      fetch(API + '?api=console&_=' + Date.now(), { credentials: 'omit' }).then(function (r) { return r.json(); }).then(render).catch(function (e) { $('updated').textContent = 'Refresh failed: ' + e; });
+    } else if (window.CONSOLE_DEMO) render(window.CONSOLE_DEMO);
+  }
+  $('run').onclick = function () {
+    running = true; $('run').disabled = true; $('runStatus').textContent = 'Running a full pass…'; $('runStatus').className = 'status run';
+    var done = function (r) { running = false; $('run').disabled = false; $('runStatus').textContent = r.message; $('runStatus').className = 'status ' + (r.ok ? 'ok' : 'bad'); setTimeout(load, 1500); };
+    if (inApps) google.script.run.withSuccessHandler(done).withFailureHandler(function (e) { done({ ok: false, message: 'Run failed: ' + (e && e.message ? e.message : e) }); }).consoleRunNow();
+    else if (API) apiPost({ api: 'run' }).then(done).catch(function (e) { done({ ok: false, message: 'Run failed: ' + e }); });
+    else done({ ok: true, message: 'Demo page: nothing to run here.' });
+  };
+  $('tabPlain').onclick = function () { tech = false; $('tabPlain').className = 'on'; $('tabTech').className = ''; $('plainLog').style.display = ''; $('techLog').style.display = 'none'; };
+  $('tabTech').onclick = function () { tech = true; $('tabTech').className = 'on'; $('tabPlain').className = ''; $('plainLog').style.display = 'none'; $('techLog').style.display = ''; };
+  var adminCall = function (fn, args) {
+    $('adminStatus').textContent = 'Working…'; $('adminStatus').className = 'status run';
+    var done = function (r) { $('adminStatus').textContent = r.message; $('adminStatus').className = 'status ' + (r.ok ? 'ok' : 'bad'); if (r.ok) setTimeout(load, 1000); };
+    if (inApps) google.script.run.withSuccessHandler(done).withFailureHandler(function (e) { done({ ok: false, message: String(e && e.message ? e.message : e) }); })[fn].apply(null, args);
+    else apiPost(fn === 'consoleSetSheet' ? { api: 'setSheet', key: args[0], ref: args[1] } : { api: 'setOverrides', key: args[0], overrides: args[1] }).then(done).catch(function (e) { done({ ok: false, message: String(e) }); });
+  };
+  $('setSheet').onclick = function () { adminCall('consoleSetSheet', [$('key').value, $('sheetRef').value]); };
+  $('setOv').onclick = function () { adminCall('consoleSetOverrides', [$('key').value, { bay_pdf: $('ovBay').value, tuscola: $('ovTuscola').value, genesee: $('ovGenesee').value, saginaw_election: $('ovSaginaw').value, midland_election: $('ovMidland').value }]); };
+  load(); setInterval(load, 30000);
+})();
+</script>
+</body>
+</html>
