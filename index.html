@@ -28,12 +28,12 @@ button.ghost{background:transparent;color:var(--t1);border-color:var(--border)}b
 .status{font-weight:600}.status.ok{color:var(--ok)}.status.bad{color:var(--bad)}.status.run{color:var(--warn)}
 .counties{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px}
 .cty{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--surface2)}.cty .n{font-weight:600;display:flex;align-items:center;gap:8px}.cty .s{font-size:13px;color:var(--t2);margin-top:4px;line-height:1.4}.cty .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--border)}
-.cty.ok .dot{background:var(--ok)}.cty.bad .dot{background:var(--bad)}.cty.warn .dot{background:var(--warn)}.cty .tech{display:none;font:11.5px var(--mono);color:var(--t2);margin-top:8px;word-break:break-word}.cty.open .tech{display:block}
+.cty.ok .dot{background:var(--ok)}.cty.bad .dot{background:var(--bad)}.cty.warn .dot{background:var(--warn)}.cty .tech{display:none;font:11.5px var(--mono);color:var(--t2);margin-top:8px;word-break:break-word}.cty.open .tech{display:block}.cty .tech a{color:var(--accent);font:600 13px 'IBM Plex Sans',sans-serif}
 .cty ul{margin:6px 0 0;padding-left:16px;display:grid;gap:3px}.cty li{font-size:13.5px;line-height:1.4;color:var(--t2)}.cty li:first-child{color:var(--t1);font-weight:500}.cty.bad li.issue,.cty.warn li.issue{color:var(--t1)}
 .cty .n .st{margin-left:auto;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--t2)}.cty.ok .n .st{color:var(--ok)}.cty.warn .n .st{color:var(--warn)}.cty.bad .n .st{color:var(--bad)}
 .tabs{display:flex;gap:6px;margin-bottom:10px}.tabs button{background:transparent;color:var(--t2);border-color:var(--border)}.tabs button.on{background:var(--surface2);color:var(--t1)}
-.plain{display:grid;gap:6px}.plain .row{display:grid;grid-template-columns:72px 1fr;gap:10px;padding:8px 10px;border-radius:8px;background:var(--surface2);border-left:3px solid var(--border)}.plain .row.ok{border-left-color:var(--ok)}.plain .row.bad{border-left-color:var(--bad)}.plain .row.warn{border-left-color:var(--warn)}.plain .t{color:var(--t2);font-size:13px}
-pre{margin:0;background:#0b0e13;color:#d7dbe4;border-radius:10px;padding:14px;font:12px/1.5 var(--mono);max-height:420px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.plain{display:grid;gap:6px;max-height:340px;overflow:auto;padding-right:4px}.plain .row{display:grid;grid-template-columns:72px 1fr;gap:10px;padding:8px 10px;border-radius:8px;background:var(--surface2);border-left:3px solid var(--border)}.plain .row.ok{border-left-color:var(--ok)}.plain .row.bad{border-left-color:var(--bad)}.plain .row.warn{border-left-color:var(--warn)}.plain .t{color:var(--t2);font-size:13px}
+pre{margin:0;background:#0b0e13;color:#d7dbe4;border-radius:10px;padding:14px;font:12px/1.5 var(--mono);max-height:340px;overflow:auto;white-space:pre-wrap;word-break:break-word}
 .admin{display:grid;grid-template-columns:160px 1fr auto;gap:8px 12px;align-items:center}.admin input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--t1);font:13px var(--mono)}.admin small{grid-column:2/4;color:var(--t2);margin-top:-4px}
 .hint{color:var(--t2);font-size:13px;margin-top:8px}
 details summary{cursor:pointer;color:var(--t2);font-weight:600}
@@ -66,7 +66,7 @@ details summary{cursor:pointer;color:var(--t2);font-weight:600}
 <div class="bar"><button id="run" type="button">Run now</button><span class="status" id="runStatus">Idle</span></div>
 <div class="hint">Run now asks the poller for a full pass immediately and tells the laptop relay to re-pull every county on its next check-in (within a minute). Otherwise everything runs on its own, once a minute.</div>
 <div class="counties" id="counties"></div>
-<div class="hint">Green: numbers flowing, no problems. Amber: something to be aware of, numbers still landing. Red: that county is not updating; read the note. Click a card for the technical detail.</div>
+<div class="hint">Green: numbers flowing, no problems. Amber: something to be aware of, numbers still landing. Red: that county is not updating; read the note. Click a card for the technical line and a link to the county's own results page, to double-check the numbers.</div>
 </section>
 
 <section class="card"><h2>Log</h2>
@@ -83,13 +83,13 @@ details summary{cursor:pointer;color:var(--t2);font-weight:600}
 <div class="admin">
   <label>Admin key</label><input id="key" type="password" autocomplete="off" placeholder="paste the run-now key"><span></span>
   <label>Input sheet</label><input id="sheetRef" placeholder="paste the Google Sheet link or id of the tracker to read and write"><button class="small" id="setSheet" type="button">Switch sheet</button>
-  <small>Now using: <span id="curSheet"></span>. The sheet must contain the tracker tab with the same column headers; the switch is refused otherwise.</small>
-  <label>Saginaw election</label><input id="ovSaginaw" placeholder="election page link or id on app.enhancedvoting.com (blank = built-in)"><span></span>
-  <label>Midland election</label><input id="ovMidland" placeholder="election page link or id on app.enhancedvoting.com (blank = built-in)"><span></span>
-  <label>Genesee folder</label><input id="ovGenesee" placeholder="Clarity election folder link (blank = built-in)"><span></span>
-  <label>Tuscola page</label><input id="ovTuscola" placeholder="ticker page link (blank = built-in)"><span></span>
-  <label>Bay PDF link</label><input id="ovBay" placeholder="direct link to the precinct PDF (blank = the relay finds it on the clerk's page)"><button class="small" id="setOv" type="button">Save sources</button>
-  <small>Oakland and Macomb (county totals for the watch races) are fixed. A blank field means the built-in address shown in the table above.</small>
+  <small>Now using: <span id="curSheet"></span>. The sheet must contain the tracker tab; the switch is refused if the main candidate columns cannot be found. Column check: <span id="hdrCheck"></span></small>
+  <label>Saginaw election</label><input id="ovSaginaw" placeholder="leave empty to use the standard address shown in the table above"><span></span>
+  <label>Midland election</label><input id="ovMidland" placeholder="leave empty to use the standard address shown in the table above"><span></span>
+  <label>Genesee folder</label><input id="ovGenesee" placeholder="leave empty to use the standard address shown in the table above"><span></span>
+  <label>Tuscola page</label><input id="ovTuscola" placeholder="leave empty to use the standard address shown in the table above"><span></span>
+  <label>Bay PDF link</label><input id="ovBay" placeholder="leave empty and the relay finds the PDF on the clerk's page by itself"><button class="small" id="setOv" type="button">Save sources</button>
+  <small><b>To change a source:</b> paste the new address into its field and click Save sources. <b>To undo it:</b> clear that field and click Save sources again; the standard address from the table above is used. A field showing "set: ..." in grey is an override currently in effect. Oakland and Macomb (county totals for the watch races) are fixed.</small>
 </div>
 <div class="status" id="adminStatus" style="margin-top:8px"></div>
 </section>
@@ -120,6 +120,7 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
     if (d.logUrl) L += '<a href="' + esc(d.logUrl) + '" target="_blank">Open the poller log <span>every run, tape checks, AI audit</span></a>';
     $('links').innerHTML = L;
     $('curSheet').textContent = d.sheet.name + ' (' + d.sheet.id + ')';
+    if (d.headers) { $('hdrCheck').textContent = d.headers.text; $('hdrCheck').style.color = d.headers.ok ? 'var(--ok)' : (d.headers.missing && d.headers.missing.length ? 'var(--bad)' : 'var(--warn)'); }
     $('sources').innerHTML = d.sources.map(function (s) { return '<tr><td><b>' + esc(s.county) + '</b></td><td>' + esc(s.how) + (s.note ? '<div class="hint">' + esc(s.note) + '</div>' : '') + '</td><td>' + (s.url ? '<a href="' + esc(s.url) + '" target="_blank">' + esc(s.url.replace(/^https?:\/\//, '').slice(0, 70)) + '</a>' : '<span class="hint">none</span>') + '</td></tr>'; }).join('');
     $('srcHint').textContent = d.sourceHint || '';
     [['ovBay', 'bay_pdf'], ['ovTuscola', 'tuscola'], ['ovGenesee', 'genesee'], ['ovSaginaw', 'saginaw_election'], ['ovMidland', 'midland_election']].forEach(function (p) { var el = $(p[0]); if (!el.dataset.ph) el.dataset.ph = el.placeholder; el.placeholder = d.overrides[p[1]] ? 'set: ' + d.overrides[p[1]] : el.dataset.ph; });
@@ -127,10 +128,10 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
     $('counties').innerHTML = d.counties.map(function (c) {
       var lines = c.lines || [c.plain];
       return '<div class="cty ' + c.state + '" data-c="' + esc(c.county) + '"><div class="n"><span class="dot"></span>' + esc(c.county) + '<span class="st">' + (stWord[c.state] || '') + '</span></div><ul>' +
-        lines.map(function (l, i) { return '<li class="' + (i > 0 && /not in the sheet|could not|held back|has not|went down|differently|skipped|read back/i.test(l) ? 'issue' : '') + '">' + esc(l) + '</li>'; }).join('') + '</ul><div class="tech">' + esc(c.technical) + '</div></div>';
+        lines.map(function (l, i) { return '<li class="' + (i > 0 && /not in the sheet|could not|held back|has not|went down|differently|skipped|read back/i.test(l) ? 'issue' : '') + '">' + esc(l) + '</li>'; }).join('') + '</ul><div class="tech">' + (c.url ? '<a href="' + esc(c.url) + '" target="_blank" onclick="event.stopPropagation()">Check the county\'s own page</a><br>' : '') + esc(c.technical) + '</div></div>';
     }).join('');
     Array.prototype.forEach.call(document.querySelectorAll('.cty'), function (el) { el.onclick = function () { el.classList.toggle('open'); }; });
-    if (!running) { var hb = d.heartbeat; $('runStatus').textContent = hb.alive ? 'Pipeline running (relay checked in ' + hb.ageMin + ' min ago)' : 'Relay not heard from' + (hb.ageMin === null ? ' yet' : ' for ' + hb.ageMin + ' min'); $('runStatus').className = 'status ' + (hb.alive ? 'ok' : 'bad'); }
+    if (!running) { var hb = d.heartbeat; $('runStatus').textContent = hb.alive ? 'Last run: ' + (hb.ageMin === 0 ? 'just now' : hb.ageMin + ' min ago') : (hb.ageMin === null ? 'No run yet: the laptop relay has not checked in' : 'No run for ' + hb.ageMin + ' min: the laptop relay has not checked in'); $('runStatus').className = 'status ' + (hb.alive ? 'ok' : 'bad'); }
     $('plainLog').innerHTML = d.runs.length ? d.runs.map(function (r) { return '<div class="row ' + r.state + '"><div class="t">' + esc(r.at) + '</div><div>' + esc(r.plain) + '</div></div>'; }).join('') : '<div class="hint">No runs logged yet.</div>';
     var t = '== Poller runs (newest first)\n' + d.runsRaw.join('\n') + '\n\n== Laptop relay, last lines\n' + (d.relayLog.length ? d.relayLog.join('\n') : '(nothing received yet)');
     $('techPre').textContent = t;
