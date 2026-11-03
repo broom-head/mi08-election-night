@@ -22,7 +22,7 @@ label.chk{display:flex;gap:6px;align-items:center;color:var(--t2);font-size:14px
 .sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:10px}
 .sheet{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:var(--surface2)}.sheet .n{font-weight:600;margin-bottom:6px;word-break:break-word}.sheet .who{font-size:12px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em}
 .kv{display:grid;grid-template-columns:1fr auto;gap:2px 12px;font-size:14px}.kv b{font-weight:600}.kv .d{color:var(--dem)}.kv .r{color:var(--rep)}
-table{width:100%;border-collapse:collapse}th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--t2);padding:6px 8px;border-bottom:1px solid var(--border)}td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top;font-variant-numeric:tabular-nums}td.num{text-align:right;font-family:var(--mono);font-size:13px}
+table{width:100%;border-collapse:collapse}th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--t2);padding:6px 8px;border-bottom:1px solid var(--border)}td{padding:10px 8px;border-bottom:1px solid var(--border);vertical-align:top;font-variant-numeric:tabular-nums;font-size:16px}td.num{text-align:right;font-family:var(--mono);font-size:17px;font-weight:500}td .where{display:block;font:13px var(--mono);color:var(--t2);margin-top:2px}td .pl{font-weight:600}
 tr.minor td{color:var(--t3)}td.neg{color:var(--rep)}td.pos{color:var(--dem)}
 .hint{color:var(--t2);font-size:13px;margin-top:8px}.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--border);color:var(--t2);margin-left:6px}
 .list{font:13px var(--mono);color:var(--t2);white-space:pre-wrap;word-break:break-word}
@@ -53,6 +53,7 @@ tr.minor td{color:var(--t3)}td.neg{color:var(--rep)}td.pos{color:var(--dem)}
 
 <section class="card" id="diffs" style="display:none">
 <h2>Cells that differ</h2>
+<div class="hint" style="margin:0 0 6px">Each line names the precinct, then exactly where the cell sits in each sheet (tab, row, cell address). A − B treats a blank as 0.</div>
 <div id="tables"></div>
 </section>
 </div>
@@ -96,8 +97,11 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
       h += '<h2 style="margin-top:14px">' + esc(t.tab) + ' tab <span class="pill">' + t.rows + ' rows matched</span>' + (t.columns ? '<span class="pill">' + t.columns + ' columns</span>' : '') + '</h2>';
       if (t.error) { h += '<div class="hint">' + esc(t.error) + '</div>'; return; }
       if (!list.length) h += '<div class="hint">No differences' + (t.diffs.length ? ' beyond blank-vs-0' : '') + '.</div>';
-      else h += '<table><thead><tr><th>County</th><th>Muni</th><th>Precinct</th><th>Column</th><th style="text-align:right">A · yours</th><th style="text-align:right">B · Stephen\'s</th><th style="text-align:right">A − B</th></tr></thead><tbody>' +
-        list.map(function (d) { return '<tr' + (d.minor ? ' class="minor"' : '') + '><td>' + esc(d.county) + '</td><td>' + esc(d.muni) + '</td><td>' + esc(d.label) + '</td><td>' + esc(d.header) + '</td><td class="num">' + cell(d.a) + '</td><td class="num">' + cell(d.b) + '</td><td class="num ' + (d.diff === null ? '' : d.diff > 0 ? 'pos' : d.diff < 0 ? 'neg' : '') + '">' + (d.diff === null ? '–' : (d.diff > 0 ? '+' : '') + d.diff.toLocaleString('en-US')) + '</td></tr>'; }).join('') + '</tbody></table>';
+      else h += '<table><thead><tr><th>Precinct</th><th>Column</th><th style="text-align:right">A · yours</th><th style="text-align:right">B · Stephen\'s</th><th style="text-align:right">A − B</th></tr></thead><tbody>' +
+        list.map(function (d) {
+          var whereA = esc(t.tabA || t.tab) + ' · row ' + d.rowA + ' · cell ' + esc(d.cellA), whereB = esc(t.tabB || t.tab) + ' · row ' + d.rowB + ' · cell ' + esc(d.cellB);
+          return '<tr' + (d.minor ? ' class="minor"' : '') + '><td><span class="pl">' + esc(d.county) + ' · ' + esc(d.muni) + ' · ' + esc(d.label) + '</span><span class="where">A: ' + whereA + '</span><span class="where">B: ' + whereB + '</span></td><td><span class="pl">' + esc(d.header) + '</span></td><td class="num">' + cell(d.a) + '</td><td class="num">' + cell(d.b) + '</td><td class="num ' + (d.diff === null ? '' : d.diff > 0 ? 'pos' : d.diff < 0 ? 'neg' : '') + '">' + (d.diff === null ? '–' : (d.diff > 0 ? '+' : '') + d.diff.toLocaleString('en-US')) + '</td></tr>';
+        }).join('') + '</tbody></table>';
       if (t.onlyA && t.onlyA.length) h += '<div class="hint">Rows only in A (' + t.onlyA.length + '): <span class="list">' + esc(t.onlyA.slice(0, 20).join('; ')) + (t.onlyA.length > 20 ? ' …' : '') + '</span></div>';
       if (t.onlyB && t.onlyB.length) h += '<div class="hint">Rows only in B (' + t.onlyB.length + '): <span class="list">' + esc(t.onlyB.slice(0, 20).join('; ')) + (t.onlyB.length > 20 ? ' …' : '') + '</span></div>';
       if (t.duplicates && t.duplicates.length) h += '<div class="hint">Labels that appear twice in A, compared once: ' + esc(t.duplicates.join('; ')) + '</div>';
