@@ -19,8 +19,8 @@ h1{font-size:26px;margin:0;letter-spacing:-.01em}h2{font-size:14px;text-transfor
 .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:8px}
 .step{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:var(--surface2)}.step b{display:block;margin-bottom:4px}.step small{color:var(--t2);display:block;line-height:1.45}
 .step em{font-style:normal;color:var(--t1);font-weight:500}
-.links{display:flex;flex-wrap:wrap;gap:10px}.links a{display:inline-flex;flex-direction:column;padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--t1);text-decoration:none;font-weight:600}
-.links a:hover{border-color:var(--accent)}.links a span{font-weight:400;color:var(--t2);font-size:13px}
+.links{display:flex;flex-wrap:wrap;gap:10px}.links a{display:inline-flex;flex-direction:column;padding:10px 16px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;text-decoration:none;font-weight:600;font-size:15px}
+.links a:hover{filter:brightness(1.1)}.links a span{font-weight:400;color:rgba(255,255,255,.85);font-size:12.5px}
 table{width:100%;border-collapse:collapse}th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--t2);padding:6px 8px;border-bottom:1px solid var(--border)}td{padding:8px;border-bottom:1px solid var(--border);vertical-align:top}td a{color:var(--accent);word-break:break-all}
 .bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
 button{padding:10px 16px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;font:600 15px 'IBM Plex Sans',sans-serif;cursor:pointer}button[disabled]{opacity:.5;cursor:wait}
@@ -43,11 +43,10 @@ details summary{cursor:pointer;color:var(--t2);font-weight:600}
 <body>
 <div class="wrap">
 <div class="hdr">
-  <div><h1>MI-08 county results poller</h1><div class="sub" id="subline">Loading&hellip;</div><div style="margin-top:8px"><span class="badge live" id="mode">&nbsp;</span></div></div>
+  <div><h1>MI-08 county results poller</h1><div class="sub" id="subline">Loading&hellip;</div><div style="margin-top:8px"><span class="badge live" id="mode">&nbsp;</span></div>
+    <div class="links" id="links" style="margin-top:14px"></div></div>
   <div class="right"><span class="status" id="updated"></span><button class="ghost small" id="theme" type="button">Light mode</button></div>
 </div>
-
-<section class="card"><h2>Where the numbers land</h2><div class="links" id="links"></div></section>
 
 <section class="card"><h2>How it works</h2>
 <div class="steps">
@@ -116,9 +115,9 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
     $('mode').textContent = d.modeLabel; $('mode').className = 'badge ' + (d.demo ? 'demo' : 'live');
     $('updated').textContent = 'Updated ' + d.generatedLocal;
     var L = '';
-    L += '<a href="' + esc(d.sheet.url) + '" target="_blank">Open the tracker sheet <span>' + esc(d.sheet.name) + '</span></a>';
+    L += '<a href="' + esc(d.sheet.url) + '" target="_blank">See the underlying results spreadsheet <span>' + esc(d.sheet.name) + '</span></a>';
     var boardHref = inApps ? d.boardUrl : ('board.html' + (API && API !== window.DEFAULT_API ? '?api=' + encodeURIComponent(API) : ''));
-    L += '<a href="' + esc(boardHref) + '" target="_blank">Open the results board <span>reads the sheet every minute</span></a>';
+    L += '<a href="' + esc(boardHref) + '" target="_blank">See the results board <span>the big-screen view of the same spreadsheet</span></a>';
     $('links').innerHTML = L;
     $('logLink').innerHTML = d.logUrl ? 'This box shows the last 40 runs. The complete record is a Google Sheet, <a href="' + esc(d.logUrl) + '" target="_blank" style="color:var(--accent)">the poller log</a>: every run since the start, the tape-versus-county checks, and the AI audit notes. You only need it if something has to be traced back.' : '';
     $('curSheet').textContent = d.sheet.name + ' (' + d.sheet.id + ')';
