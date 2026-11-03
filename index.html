@@ -52,8 +52,8 @@ details summary{cursor:pointer;color:var(--t2);font-weight:600}
 <div class="steps">
 <div class="step"><b>1. The counties publish results</b><small>Each county clerk posts election-night numbers on its own website, in its own format. Saginaw, Midland, Genesee, Oakland and Macomb use results websites that also publish the numbers as a <em>machine-readable data file</em> (called JSON: the same numbers a person sees on the page, but in a form a program can read exactly). Tuscola posts a <em>plain web page</em> (HTML) with a table of precinct results. Bay posts a <em>PDF</em> with every precinct, the kind of document a clerk prints.</small></div>
 <div class="step"><b>2. A laptop collects them</b><small>A small program on John's laptop (the <em>relay</em>) visits every county site once a minute, the way a browser would, keeps only what has changed since last time, and sends it all in one package to the poller. On election night the Mac's scheduler (launchd) starts it automatically every minute. Pressing <em>Run now</em> below asks for an extra pass right away.</small></div>
-<div class="step"><b>3. The poller writes the sheet</b><small>The <em>poller</em> is a Google Apps Script, a program that lives inside Google and is allowed to edit the tracker sheet. It reads each county's numbers, matches each county precinct to its row in the tracker, writes election-day, absentee and early-vote counts for each candidate, then <em>re-reads every cell it wrote</em> to confirm it landed. Numbers typed by hand from tapes are never overwritten. Every run is written to a log sheet.</small></div>
-<div class="step"><b>4. The sheet and the board update</b><small>The tracker's own formulas (benchmarks, dashboard, margins) recalculate as cells land. The results board reads the sheet every minute and shows the same numbers in a bigger, clearer form.</small></div>
+<div class="step"><b>3. The poller writes the input sheet</b><small>The <em>poller</em> is a Google Apps Script, a program that lives inside Google and is allowed to edit the <em>input sheet</em> (John's copy of the tracker). It reads each county's numbers, matches each county precinct to its row on the tracker tab and on the State Leg Races tab, writes election-day, absentee and early-vote counts for each candidate, then <em>re-reads every cell it wrote</em> to confirm it landed. Numbers typed by hand from tapes are never overwritten. Every run is written to a log sheet.</small></div>
+<div class="step"><b>4. The results sheet and the board update</b><small>Volunteers' tape photos are typed into Stephen's sheet (the <em>results sheet</em>); John checks the county pulls here and pastes them into it. Its own formulas (benchmarks, dashboard, margins) recalculate as cells land, and the results board reads that sheet every minute and shows the same numbers in a bigger, clearer form. (When no separate results sheet is set, the board reads the input sheet.)</small></div>
 </div></section>
 
 <section class="card"><h2>Run and status</h2>
@@ -80,11 +80,13 @@ details summary{cursor:pointer;color:var(--t2);font-weight:600}
 
 
 <section class="card" id="settings"><h2>Settings: the input sheet and the sources</h2>
-<div class="hint" style="margin:0 0 12px">Changing anything here needs the admin key (the token at the end of John's run-now bookmark). The key stays in this browser only. Changes take effect at once: the poller and board switch sheets immediately, and the laptop relay picks up a new source on its next check-in (within a minute).</div>
+<div class="hint" style="margin:0 0 12px">Changing anything here needs the admin key (the token at the end of John's run-now bookmark). The key stays in this browser only. Changes take effect at once: the poller or the board switches sheets immediately, and the laptop relay picks up a new source on its next check-in (within a minute).</div>
 <div class="admin">
   <label>Admin key</label><input id="key" type="password" autocomplete="off" placeholder="paste the run-now key"><span></span>
   <label>Input sheet</label><input id="sheetRef" placeholder="paste the Google Sheet link or id of the tracker to read and write"><button class="small" id="setSheet" type="button">Switch sheet</button>
-  <small>Now using: <span id="curSheet"></span>. The sheet must contain the tracker tab; the switch is refused if the main candidate columns cannot be found. Column check: <span id="hdrCheck"></span></small>
+  <small>Now writing: <span id="curSheet"></span>. The sheet must contain the tracker tab; the switch is refused if the main candidate columns cannot be found. Column check: <span id="hdrCheck"></span>. State Leg Races tab: <span id="legCheck"></span></small>
+  <label>Results sheet (board)</label><input id="boardRef" placeholder="paste Stephen's sheet link; leave empty and the board reads the input sheet"><button class="small" id="setBoard" type="button">Set results sheet</button>
+  <small>Board now reads: <span id="curBoard"></span>. The poller writes the input sheet above; the board and its tape lines read the results sheet. The poller's account needs at least view access to it.</small>
   <label>Saginaw election</label><input id="ovSaginaw" placeholder="leave empty to use the standard address shown in the table above"><span></span>
   <label>Midland election</label><input id="ovMidland" placeholder="leave empty to use the standard address shown in the table above"><span></span>
   <label>Genesee folder</label><input id="ovGenesee" placeholder="leave empty to use the standard address shown in the table above"><span></span>
@@ -115,13 +117,17 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
     $('mode').textContent = d.modeLabel; $('mode').className = 'badge ' + (d.demo ? 'demo' : 'live');
     $('updated').textContent = 'Updated ' + d.generatedLocal;
     var L = '';
-    L += '<a href="' + esc(d.sheet.url) + '" target="_blank">See the underlying results spreadsheet <span>' + esc(d.sheet.name) + '</span></a>';
+    var same = !d.boardSheet || d.boardSheet.same;
+    L += '<a href="' + esc(same ? d.sheet.url : d.boardSheet.url) + '" target="_blank">See the results spreadsheet <span>' + esc(same ? d.sheet.name : d.boardSheet.name) + (same ? '' : ' (what the board shows)') + '</span></a>';
+    if (!same) L += '<a href="' + esc(d.sheet.url) + '" target="_blank">See the poller\'s input sheet <span>' + esc(d.sheet.name) + ' (county pulls land here)</span></a>';
     var boardHref = inApps ? d.boardUrl : ('board.html' + (API && API !== window.DEFAULT_API ? '?api=' + encodeURIComponent(API) : ''));
     L += '<a href="' + esc(boardHref) + '" target="_blank">See the results board <span>the big-screen view of the same spreadsheet</span></a>';
     $('links').innerHTML = L;
     $('logLink').innerHTML = d.logUrl ? 'This box shows the last 40 runs. The complete record is a Google Sheet, <a href="' + esc(d.logUrl) + '" target="_blank" style="color:var(--accent)">the poller log</a>: every run since the start, the tape-versus-county checks, and the AI audit notes. You only need it if something has to be traced back.' : '';
     $('curSheet').textContent = d.sheet.name + ' (' + d.sheet.id + ')';
     if (d.headers) { $('hdrCheck').textContent = d.headers.text; $('hdrCheck').style.color = d.headers.ok ? 'var(--ok)' : (d.headers.missing && d.headers.missing.length ? 'var(--bad)' : 'var(--warn)'); }
+    if (d.legTab) { $('legCheck').textContent = d.legTab.text; $('legCheck').style.color = d.legTab.present && d.legTab.ok ? 'var(--ok)' : (d.legTab.present ? 'var(--bad)' : 'var(--warn)'); }
+    $('curBoard').textContent = (!d.boardSheet || d.boardSheet.same) ? 'the input sheet (no separate results sheet set)' : d.boardSheet.name + ' (' + d.boardSheet.id + ')';
     $('sources').innerHTML = d.sources.map(function (s) { return '<tr><td><b>' + esc(s.county) + '</b></td><td>' + esc(s.how) + (s.note ? '<div class="hint">' + esc(s.note) + '</div>' : '') + '</td><td>' + (s.url ? '<a href="' + esc(s.url) + '" target="_blank">' + esc(s.url.replace(/^https?:\/\//, '').slice(0, 70)) + '</a>' : '<span class="hint">none</span>') + '</td></tr>'; }).join('');
     $('srcHint').textContent = d.sourceHint || '';
     [['ovBay', 'bay_pdf'], ['ovTuscola', 'tuscola'], ['ovGenesee', 'genesee'], ['ovSaginaw', 'saginaw_election'], ['ovMidland', 'midland_election']].forEach(function (p) { var el = $(p[0]); if (!el.dataset.ph) el.dataset.ph = el.placeholder; el.placeholder = d.overrides[p[1]] ? 'set: ' + d.overrides[p[1]] : el.dataset.ph; });
@@ -162,9 +168,10 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
     $('adminStatus').textContent = 'Working…'; $('adminStatus').className = 'status run';
     var done = function (r) { $('adminStatus').textContent = r.message; $('adminStatus').className = 'status ' + (r.ok ? 'ok' : 'bad'); if (r.ok) setTimeout(load, 1000); };
     if (inApps) google.script.run.withSuccessHandler(done).withFailureHandler(function (e) { done({ ok: false, message: String(e && e.message ? e.message : e) }); })[fn].apply(null, args);
-    else apiPost(fn === 'consoleSetSheet' ? { api: 'setSheet', key: args[0], ref: args[1] } : { api: 'setOverrides', key: args[0], overrides: args[1] }).then(done).catch(function (e) { done({ ok: false, message: String(e) }); });
+    else apiPost(fn === 'consoleSetSheet' ? { api: 'setSheet', key: args[0], ref: args[1] } : fn === 'consoleSetBoardSheet' ? { api: 'setBoardSheet', key: args[0], ref: args[1] } : { api: 'setOverrides', key: args[0], overrides: args[1] }).then(done).catch(function (e) { done({ ok: false, message: String(e) }); });
   };
   $('setSheet').onclick = function () { adminCall('consoleSetSheet', [$('key').value, $('sheetRef').value]); };
+  $('setBoard').onclick = function () { adminCall('consoleSetBoardSheet', [$('key').value, $('boardRef').value]); };
   $('setOv').onclick = function () { adminCall('consoleSetOverrides', [$('key').value, { bay_pdf: $('ovBay').value, tuscola: $('ovTuscola').value, genesee: $('ovGenesee').value, saginaw_election: $('ovSaginaw').value, midland_election: $('ovMidland').value }]); };
   load(); setInterval(load, 30000);
 })();
