@@ -81,7 +81,7 @@ body{padding:32px;min-height:100vh}
 .dash,.leg{grid-column:span 12}
 .watch td{font-size:30px;font-weight:600}
 .county .note{font-size:19px;color:var(--t2);margin-top:8px;line-height:1.3}
-td.sub{color:var(--t3);font-size:18px}
+td.sub{color:var(--t3);font-size:18px}tr.grp td{text-align:left;font-weight:600;color:var(--t2);background:var(--surface2);border-top:2px solid var(--border)}
 .hint{color:var(--t3);font-size:18px;margin-top:10px;line-height:1.35}
 td.r{color:var(--rep)}
 table{width:100%;border-collapse:collapse;margin-top:12px}
@@ -187,13 +187,13 @@ body:not(.tv) .footer{font-size:13px;gap:8px 18px;margin-top:16px}
   <section class="counties" id="counties"></section>
   <section class="card dash">
     <div class="label">E-Night Dashboard &middot; the sheet's own tab</div>
-    <table><thead><tr id="dashHead"></tr></thead><tbody id="dashBody"></tbody></table>
-    <div class="hint">Read straight from the sheet's "E-Night Dashboard" tab, cell for cell, headers included. Nothing here is recomputed; a blank cell is blank in the sheet too.</div>
+    <div id="dashBlocks"></div>
+    <div class="hint">Read straight from the sheet's "E-Night Dashboard" tab, cell for cell, headers included: every block on that tab (KMR, and the Governor and Senate blocks when the sheet has them). Nothing here is recomputed; a blank cell is blank in the sheet too.</div>
   </section>
   <section class="card munis">
-    <div class="label">Tape precincts &middot; the 39 on the car routes</div>
-    <table><thead><tr><th>Muni</th><th>Tapes in</th><th>AV in</th><th>KMR %</th><th>Margin</th><th>Benchmark comp.</th></tr></thead><tbody id="tapeBody"></tbody></table>
-    <div class="hint" id="tapeHint">The sheet has no row for these groups, so the board adds the sheet's own row totals (KMR Total, Smith Total, 3rd party, win number, estimated votes) for the precincts of each route and applies the sheet's formulas to the sum: KMR % = KMR &divide; all votes; Benchmark comp. = KMR % minus win number &divide; estimated votes. Tapes in = rows with an E-Day number; "E-Day only" until the county posts absentee.</div>
+    <div class="label">Tape precincts &middot; the 39 on the car routes, each its own row in the sheet</div>
+    <table><thead><tr><th>Precinct</th><th>KMR tape</th><th id="repTapeTh">Smith tape</th><th>AV in</th><th>KMR %</th><th>Margin</th><th>Benchmark comp.</th></tr></thead><tbody id="tapeBody"></tbody></table>
+    <div class="hint" id="tapeHint">Each line is that precinct's own row in the sheet: the E-Day (Tapes) cells typed from the volunteers' tape photos, whether its AV cell is filled yet, and the row's own KMR %, margin and Benchmark Comparison. Nothing is added up by the board.</div>
   </section>
   <div class="right-col">
     <section class="card ticket">
@@ -267,27 +267,34 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
         (c.note && !c.reported ? '<div class="note">' + c.note + '</div>' : '') + '</section>';
     });
     $('counties').innerHTML = ch;
-    // E-Night Dashboard: the sheet's tab, cell for cell
-    var DH = d.dashboardHeaders || [];
-    $('dashHead').innerHTML = DH.map(function (h) { return '<th>' + String(h).replace(/</g, '&lt;') + '</th>'; }).join('');
+    // E-Night Dashboard: every block of the sheet's tab, cell for cell
     var dcell = function (h, x) { if (x === null || x === undefined) return '–'; if (typeof x !== 'number') return String(x).replace(/</g, '&lt;'); return (/%|margin|difference|benchmark/i.test(h) && !/total/i.test(h) && Math.abs(x) <= 1.5) ? pct(x, 2) : fmt(x); };
-    $('dashBody').innerHTML = (d.dashboard || []).map(function (a) {
-      var tot = /8th district/i.test(a.area);
-      return '<tr' + (tot ? ' style="font-weight:700"' : '') + '>' + a.cells.map(function (x, k) {
-        var h = DH[k] || ''; var cls = '';
-        if (k > 0 && typeof x === 'number') { if (/^kmr total/i.test(h)) cls = ' class="d"'; else if (/total$/i.test(h) && !/kmr|3rd|third/i.test(h)) cls = ' class="r"'; else if (/margin|difference/i.test(h)) cls = ' class="' + (x >= 0 ? 'ahead' : 'behind') + '"'; }
-        return '<td' + cls + '>' + (k === 0 ? String(x).replace(/</g, '&lt;') : dcell(h, x)) + '</td>';
-      }).join('') + '</tr>';
-    }).join('') || '<tr><td colspan="8" class="sub">' + (d.sheet && d.sheet.dashboardNote ? d.sheet.dashboardNote : 'No rows found in the dashboard tab.') + '</td></tr>';
-    // tape precincts
+    var blocks = d.dashboards || (d.dashboard ? [{ title: 'KMR Dashboard', headers: d.dashboardHeaders || [], rows: d.dashboard }] : []);
+    $('dashBlocks').innerHTML = blocks.map(function (B, bi) {
+      var DH = B.headers || [];
+      return (bi ? '<div class="label" style="margin-top:14px">' : '<div class="label">') + String(B.title).replace(/</g, '&lt;') + '</div><table><thead><tr>' + DH.map(function (h) { return '<th>' + String(h).replace(/</g, '&lt;') + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        B.rows.map(function (a) {
+          var tot = /8th district/i.test(a.area);
+          return '<tr' + (tot ? ' style="font-weight:700"' : '') + '>' + a.cells.map(function (x, k) {
+            var h = DH[k] || ''; var cls = '';
+            if (k > 0 && typeof x === 'number') { if (/^kmr total|benson total|el-sayed total/i.test(h)) cls = ' class="d"'; else if (/total$/i.test(h) && !/kmr|benson|el-sayed|3rd|third/i.test(h)) cls = ' class="r"'; else if (/margin|difference/i.test(h)) cls = ' class="' + (x >= 0 ? 'ahead' : 'behind') + '"'; }
+            return '<td' + cls + '>' + (k === 0 ? String(x).replace(/</g, '&lt;') : dcell(h, x)) + '</td>';
+          }).join('') + '</tr>';
+        }).join('') + '</tbody></table>';
+    }).join('') || '<div class="sub">' + (d.sheet && d.sheet.dashboardNote ? d.sheet.dashboardNote : 'No rows found in the dashboard tab.') + '</div>';
+    // tape precincts: each route's precinct rows, straight from the sheet
+    setText('repTapeTh', N.rep + ' tape');
     var tb = '', tapesIn = 0, tapesAll = 0;
     (d.tapes || []).forEach(function (t) {
       tapesIn += t.tapesIn; tapesAll += t.expected;
-      var edOnly = t.reported > 0 && t.avIn === 0;
-      tb += '<tr' + (t.reported ? '' : ' class="dim"') + '><td>' + t.name + (t.found < t.expected ? ' <span class="sub">(' + t.missing.length + ' row' + (t.missing.length > 1 ? 's' : '') + ' not found: ' + t.missing.join(', ') + ')</span>' : '') + '</td><td>' + t.tapesIn + '/' + t.expected + '</td><td>' + t.avIn + '/' + t.expected + '</td><td class="d">' + pct(t.kmrShare) + '</td><td>' + (t.reported ? marginText(t.marginPct) : '–') + '</td><td class="' + (t.benchDiff === null ? 'na' : paceClass(t.benchDiff)) + '">' + (t.benchDiff === null ? '–' : pts(t.benchDiff) + ' pts' + (edOnly ? ' <span class="sub">E-Day only</span>' : '')) + '</td></tr>';
+      tb += '<tr class="grp"><td colspan="7">' + t.name + ' · tapes in ' + t.tapesIn + '/' + t.expected + ' · AV in ' + t.avIn + '/' + t.expected + (t.missing.length ? ' · <span class="sub">' + t.missing.length + ' row' + (t.missing.length > 1 ? 's' : '') + ' not found in the sheet: ' + t.missing.join(', ') + '</span>' : '') + '</td></tr>';
+      (t.rows || []).forEach(function (r) {
+        if (r.missing) { tb += '<tr class="dim"><td>' + r.label + '</td><td colspan="6" class="sub">no row in the sheet</td></tr>'; return; }
+        tb += '<tr' + (r.edIn ? '' : ' class="dim"') + '><td>' + r.label + ' <span class="sub">row ' + r.row + '</span></td><td class="d">' + (r.kED === null ? '–' : fmt(r.kED)) + '</td><td class="r">' + (r.sED === null ? '–' : fmt(r.sED)) + '</td><td>' + (r.avIn ? '✓' : '–') + '</td><td>' + pct(r.kmrShare) + '</td><td>' + (r.marginPct === null ? '–' : marginText(r.marginPct)) + '</td><td class="' + (r.benchComp === null ? 'na' : paceClass(r.benchComp)) + '">' + (r.benchComp === null ? '–' : pts(r.benchComp) + ' pts' + (r.edIn && !r.avIn ? ' <span class="sub">E-Day only</span>' : '')) + '</td></tr>';
+      });
     });
     $('tapeBody').innerHTML = tb;
-    setText('tapeHint', tapesIn + ' of ' + tapesAll + ' route precincts have an E-Day number in the sheet. The sheet has no row for these groups, so the board adds the sheet\'s own row totals (KMR Total, Smith Total, 3rd party, win number, estimated votes) over each route\'s precincts and applies the sheet\'s formulas to the sum: KMR % = KMR \u00f7 all votes; Benchmark comp. = KMR % minus win number \u00f7 estimated votes. "E-Day only" until the county posts absentee.');
+    setText('tapeHint', tapesIn + ' of ' + tapesAll + ' route precincts have an E-Day number in the sheet. Each line is that precinct\'s own row: the E-Day (Tapes) cells typed from the volunteers\' tape photos, whether its AV cell is filled yet, and the row\'s own KMR %, margin and Benchmark Comparison. Nothing is added up by the board.');
     // watch races
     $('watchBody').innerHTML = (d.leg || []).filter(function (g) { return g.watch; }).map(function (g) {
       var s0 = g.summary || {};
