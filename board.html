@@ -161,47 +161,43 @@ body:not(.tv) .footer{font-size:13px;gap:8px 18px;margin-top:16px}
     <div>
       <div class="split"><div class="d" id="splitD" style="width:0"></div><div class="o" id="splitO" style="width:0"></div><div class="r" id="splitR" style="width:0"></div><div class="tick"></div></div>
       <div class="totals"><span class="d">McDonald Rivet <span id="kmrTotal">0</span> &middot; <span id="kmrPct">&ndash;</span></span><span class="t3">3rd party <span id="thirdPct">&ndash;</span></span><span class="r"><span id="repName">Smith</span> <span id="smithTotal">0</span> &middot; <span id="smithPct">&ndash;</span></span></div>
+      <div class="fine" id="heroFine"></div>
     </div>
   </section>
   <div class="side">
     <section class="card pace">
-      <div class="label">Win pace &middot; complete precincts only</div>
+      <div class="label">Win pace &middot; the sheet's Benchmark Comparison</div>
       <div class="readout na" id="paceRead">Too early to read</div>
       <div class="scale"><div class="mid"></div><div class="mark" id="paceMark" style="left:50%;display:none"></div></div>
       <div class="scale-labels"><span>&minus;10 pts behind</span><span>win pace</span><span>+10 pts ahead</span></div>
-      <div class="fine" id="paceFine">The sheet's Benchmark Comparison (KMR % minus win-number %), but only over precincts where both election-day and absentee are posted.</div>
+      <div class="fine" id="paceFine">The sheet's Benchmark Comparison for the whole district (column V of the "8th District / Total" row): KMR % minus her win-number %. Reads low until absentee is in; nothing is held back or adjusted.</div>
     </section>
     <section class="card">
       <div class="label">Vote counted vs expected</div>
       <div class="barline"><span><span id="repN">0</span> of <span id="repT">277</span> precincts reported</span><span id="repPct">0%</span></div>
       <div class="bar"><div id="repBar" style="width:0"></div></div>
-      <div class="barline"><span>Complete (E-Day + absentee in)</span><span id="cmpPct">0% of expected vote</span></div>
+      <div class="barline"><span>Absentee in</span><span id="cmpPct">0 precincts</span></div>
       <div class="bar thin"><div id="cmpBar" style="width:0"></div></div>
       <div class="fine" id="avBoards">AV boards posted: 0 of 4</div>
       <div class="fine" id="byType"></div>
+      <div class="fine">Row counts from the sheet: "reported" = the row has votes in it; "absentee in" = an AV cell is filled; "expected vote" = the sheet's Total Estimated Votes column. "Counted by type" adds the sheet's E-Day, AV and Early cells.</div>
     </section>
-    <section class="reassure" id="reassure"><b>Reported &ne; complete.</b> Absentee ballots are counted last and lean Democratic. In 2024 the election-day count alone read <b>R+2.6</b> across this district; the certified final was <b>Rivet +6.7</b>. Judge tonight by the pace line.</section>
+    <section class="reassure" id="reassure"><b>Reported &ne; complete.</b> Absentee ballots are counted last and lean Democratic. In 2024 the election-day count alone read <b>R+2.6</b> across this district; the certified final was <b>Rivet +6.7</b>. Judge tonight by the Benchmark Comparison.</section>
   </div>
   <section class="counties" id="counties"></section>
   <section class="card dash">
-    <div class="label">E-Night Dashboard &middot; as in the sheet</div>
-    <table><thead><tr><th>Area</th><th>KMR Benchmark</th><th>KMR Total</th><th id="repTotalTh">Smith Total</th><th>3rd Party Total</th><th>KMR Margin</th><th>Benchmark Difference</th><th>Precincts in</th></tr></thead><tbody id="dashBody"></tbody></table>
-    <div class="hint">Same arithmetic as the sheet's totals rows: benchmark = win number &divide; estimated votes over every precinct of the area; margin and difference over whatever has been typed or pulled so far (early in the night that is mostly election-day tapes, which read redder than the final). The sheet's Saginaw/Tuscola row uses Saginaw's totals row only, so it is mirrored that way here; Tuscola's one row counts in the 8th District line.</div>
+    <div class="label">E-Night Dashboard &middot; the sheet's own tab</div>
+    <table><thead><tr id="dashHead"></tr></thead><tbody id="dashBody"></tbody></table>
+    <div class="hint">Read straight from the sheet's "E-Night Dashboard" tab, cell for cell, headers included. Nothing here is recomputed; a blank cell is blank in the sheet too.</div>
   </section>
   <section class="card munis">
     <div class="label">Tape precincts &middot; the 39 on the car routes</div>
     <table><thead><tr><th>Muni</th><th>Tapes in</th><th>AV in</th><th>KMR %</th><th>Margin</th><th>Benchmark comp.</th></tr></thead><tbody id="tapeBody"></tbody></table>
-    <div class="hint" id="tapeHint">Tapes in = precincts with an E-Day number typed. Benchmark comp. = the sheet's column V (KMR % minus win-number %) over those rows; "E-Day only" until the county posts absentee.</div>
+    <div class="hint" id="tapeHint">The sheet has no row for these groups, so the board adds the sheet's own row totals (KMR Total, Smith Total, 3rd party, win number, estimated votes) for the precincts of each route and applies the sheet's formulas to the sum: KMR % = KMR &divide; all votes; Benchmark comp. = KMR % minus win number &divide; estimated votes. Tapes in = rows with an E-Day number; "E-Day only" until the county posts absentee.</div>
   </section>
   <div class="right-col">
-    <section class="card proj">
-      <div class="label">Projected final margin</div>
-      <div class="big na" id="projBig">Not enough complete vote yet</div>
-      <div class="range" id="projRange"></div>
-      <div class="fine" id="projFine">Projection, not a result. Appears once 25% of the expected vote is complete. Range reflects county variation.</div>
-    </section>
     <section class="card ticket">
-      <div class="label">Ticket check &middot; same complete precincts</div>
+      <div class="label">Ticket check &middot; the sheet's "8th District / Total" row</div>
       <div id="ticketRows"></div>
       <div class="cmp" id="ticketCmp"></div>
     </section>
@@ -231,29 +227,30 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
   var setText = function (id, text) { var el = $(id); if (!el) return; var s = String(text); if (el.textContent !== s) { el.textContent = s; el.classList.remove('changed'); void el.offsetWidth; el.classList.add('changed'); } };
   var ageDot = function (min) { return min === null ? 'stale' : min < 5 ? 'fresh' : min < 15 ? 'aging' : 'stale'; };
   var paceClass = function (p) { return p === null ? 'na' : p >= 0 ? 'ahead' : 'behind'; };
-  var paceText = function (a, minC) { if (a.pacePts === null || a.complete < minC) return 'Too early to read'; return (a.pacePts >= 0 ? '▲ ahead of win pace ' : '▼ behind win pace ') + pts(a.pacePts) + ' pts'; };
+  var paceText = function (a) { if (a.benchComp === null || a.benchComp === undefined) return a.fromSheet === false ? 'Total row not found' : 'Nothing counted yet'; return (a.benchComp >= 0 ? '▲ ahead of win pace ' : '▼ behind win pace ') + pts(a.benchComp) + ' pts'; };
 
   function render(d) {
-    var D = d.district, minC = d.minCompletePrecincts || 10;
+    var D = d.district;
     var N = d.names || { rep: 'Smith', gov: 'Benson', sen: 'El-Sayed', govRace: 'Governor', demo: '' };
     setText('repName', N.rep); setText('repTotalTh', N.rep + ' Total'); setText('boardSub', N.demo || 'Election night results board'); $('boardSub').style.color = N.demo ? 'var(--rep)' : '';
     // hero
-    var who = D.reported === 0 ? ['Awaiting first returns', 'neu'] : D.marginPct > 0.001 ? ['McDonald Rivet leads', 'dem'] : D.marginPct < -0.001 ? [N.rep + ' leads', 'rep'] : ['Even', 'neu'];
+    var who = D.fromSheet === false ? ['Total row not found in the sheet', 'neu'] : (D.reported === 0 || D.marginPct === null) ? ['Awaiting first returns', 'neu'] : D.marginPct > 0.001 ? ['McDonald Rivet leads', 'dem'] : D.marginPct < -0.001 ? [N.rep + ' leads', 'rep'] : ['Even', 'neu'];
     setText('who', who[0]); $('who').className = 'who ' + who[1];
     setText('margin', D.reported ? marginText(D.marginPct) : '—');
     $('margin').style.color = who[1] === 'dem' ? 'var(--dem)' : who[1] === 'rep' ? 'var(--rep)' : (D.reported ? 'var(--t1)' : 'var(--border)');
-    setText('rawlead', D.reported ? ((D.marginVotes >= 0 ? 'McDonald Rivet' : N.rep) + ' ahead by ' + fmt(Math.abs(D.marginVotes)) + ' votes') : '');
+    setText('rawlead', D.reported && D.marginVotes !== null ? ((D.marginVotes >= 0 ? 'McDonald Rivet' : N.rep) + ' ahead by ' + fmt(Math.abs(D.marginVotes)) + ' votes') : '');
+    setText('heroFine', D.fromSheet ? 'Totals, shares and margin are the sheet\'s own "8th District / Total" row (row ' + D.sheetRow + ' of the tracker tab).' : 'The sheet\'s "8th District / Total" row was not found under the precincts; nothing to show until it is.');
     if (prev && prev.district.reported && D.marginPct !== null && prev.district.marginPct !== null && Math.abs(D.marginPct - prev.district.marginPct) >= 0.0005) { var dd = D.marginPct - prev.district.marginPct; $('delta').style.display = ''; setText('delta', (dd > 0 ? '▲ ' : '▼ ') + Math.abs(dd * 100).toFixed(1) + ' since ' + lastTs); }
     var vt = D.votes || 1; $('splitD').style.width = (100 * D.kmr / vt) + '%'; $('splitO').style.width = (100 * D.third / vt) + '%'; $('splitR').style.width = (100 * D.smith / vt) + '%';
     setText('kmrTotal', fmt(D.kmr)); setText('smithTotal', fmt(D.smith)); setText('kmrPct', pct(D.kmrShare)); setText('smithPct', pct(D.smithShare)); setText('thirdPct', pct(D.votes ? D.third / D.votes : null));
     setText('stWho', who[0]); setText('stMargin', D.reported ? marginText(D.marginPct) : '');
-    // pace
-    var pr = $('paceRead'); setText('paceRead', paceText(D, minC)); pr.className = 'readout ' + (D.pacePts === null || D.complete < minC ? 'na' : paceClass(D.pacePts));
-    var mk = $('paceMark'); if (D.pacePts !== null && D.complete >= minC) { mk.style.display = ''; mk.style.left = (50 + Math.max(-10, Math.min(10, D.pacePts * 100)) * 5) + '%'; mk.className = 'mark ' + paceClass(D.pacePts); } else mk.style.display = 'none';
-    setText('paceFine', D.complete >= minC ? ('Based on ' + D.complete + ' complete precincts, ' + pct(D.pctEstComplete, 0) + ' of expected vote. ' + (D.paceVotes >= 0 ? '+' : '−') + fmt(Math.abs(D.paceVotes)) + ' votes vs win number in those precincts.') : ('Shown once ' + minC + ' precincts have both election-day and absentee posted (now ' + D.complete + ').'));
+    // pace: the sheet's Benchmark Comparison in the 8th District Total row
+    var pr = $('paceRead'); setText('paceRead', paceText(D)); pr.className = 'readout ' + (D.benchComp === null ? 'na' : paceClass(D.benchComp));
+    var mk = $('paceMark'); if (D.benchComp !== null) { mk.style.display = ''; mk.style.left = (50 + Math.max(-10, Math.min(10, D.benchComp * 100)) * 5) + '%'; mk.className = 'mark ' + paceClass(D.benchComp); } else mk.style.display = 'none';
+    setText('paceFine', (D.benchComp !== null ? ('KMR ' + pct(D.kmrShare) + ' of the vote counted vs a win number of ' + pct(D.benchPct) + ', both from the "8th District / Total" row. ') : '') + 'The sheet\'s Benchmark Comparison (column V): KMR % minus her win-number %. Reads low until absentee is in; nothing is held back or adjusted.');
     // counted vs expected
     setText('repN', D.reported); setText('repT', D.precincts); setText('repPct', pct(D.pctEstReported, 0) + ' of expected vote');
-    $('repBar').style.width = (100 * (D.pctEstReported || 0)) + '%'; setText('cmpPct', pct(D.pctEstComplete, 0) + ' of expected vote'); $('cmpBar').style.width = (100 * (D.pctEstComplete || 0)) + '%';
+    $('repBar').style.width = (100 * (D.pctEstReported || 0)) + '%'; setText('cmpPct', D.avIn + ' of ' + D.precincts + ' precincts'); $('cmpBar').style.width = (100 * (D.precincts ? D.avIn / D.precincts : 0)) + '%';
     var posted = d.avBoards.filter(function (b) { return b.posted; });
     setText('avBoards', 'AV boards posted: ' + posted.length + ' of ' + d.avBoards.length + (posted.length ? ' (' + posted.map(function (b) { return b.name; }).join(', ') + ')' : '') + (posted.length < d.avBoards.length ? ' · not in: ' + d.avBoards.filter(function (b) { return !b.posted; }).map(function (b) { return b.name; }).join(', ') : ''));
     setText('byType', D.votes ? ('Counted by type: E-Day ' + fmt(D.ed) + ' · absentee ' + fmt(D.av) + ' · early ' + fmt(D.ev) + (D.tapeOnly ? ' · ' + D.tapeOnly + ' precincts are tape-only (E-Day, nothing else yet)' : '')) : '');
@@ -261,20 +258,27 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
     var ch = '';
     d.counties.forEach(function (c) {
       var f = d.health.fresh[c.name] || {}; var dot = ageDot(f.changeAgeMin === null ? f.postAgeMin : f.changeAgeMin);
-      var stale = c.reported > 0 && c.complete < c.precincts && f.changeAgeMin !== null && f.changeAgeMin >= 20;
+      var stale = c.reported > 0 && c.avIn < c.precincts && f.changeAgeMin !== null && f.changeAgeMin >= 20;
       ch += '<section class="card county' + (stale ? ' stale' : '') + '"><div class="name"><span>' + c.name + '</span><span class="dot ' + dot + '" title="' + (f.changeAgeMin === null ? 'no post yet' : 'last change ' + f.changeAgeMin + ' min ago') + '"></span></div>' +
         '<div class="shares"><span class="d">' + pct(c.kmrShare) + '</span><span class="r">' + pct(c.smithShare) + '</span></div>' +
-        '<div class="m">' + (c.reported ? marginText(c.marginPct) + ' · ' + (c.marginVotes >= 0 ? 'KMR +' : N.rep + ' +') + fmt(Math.abs(c.marginVotes)) : 'no returns yet') + '</div>' +
-        '<div class="pc ' + (c.pacePts === null || c.complete < 5 ? 'na' : paceClass(c.pacePts)) + '">' + (c.pacePts === null || c.complete < 5 ? 'pace: too early' : (c.pacePts >= 0 ? '▲ ' : '▼ ') + pts(c.pacePts) + ' pts vs win pace') + '</div>' +
-        '<div class="rep">' + c.reported + '/' + c.precincts + ' reported · ' + c.complete + ' complete · ' + pct(c.pctEstReported, 0) + ' of est. vote' + (stale ? ' · ⏱ no change ' + f.changeAgeMin + ' min' : '') + '</div>' +
+        '<div class="m">' + (c.fromSheet === false ? 'total row not found in the sheet' : c.reported && c.marginPct !== null ? marginText(c.marginPct) + ' · ' + (c.marginVotes >= 0 ? 'KMR +' : N.rep + ' +') + fmt(Math.abs(c.marginVotes)) : 'no returns yet') + '</div>' +
+        '<div class="pc ' + (c.benchComp === null ? 'na' : paceClass(c.benchComp)) + '">' + (c.benchComp === null ? 'benchmark comp.: nothing yet' : (c.benchComp >= 0 ? '▲ ' : '▼ ') + pts(c.benchComp) + ' pts vs win pace (sheet)') + '</div>' +
+        '<div class="rep">' + c.reported + '/' + c.precincts + ' reported · ' + c.avIn + ' with absentee · ' + pct(c.pctEstReported, 0) + ' of est. vote' + (stale ? ' · ⏱ no change ' + f.changeAgeMin + ' min' : '') + '</div>' +
         (c.note && !c.reported ? '<div class="note">' + c.note + '</div>' : '') + '</section>';
     });
     $('counties').innerHTML = ch;
-    // E-Night Dashboard mirror
+    // E-Night Dashboard: the sheet's tab, cell for cell
+    var DH = d.dashboardHeaders || [];
+    $('dashHead').innerHTML = DH.map(function (h) { return '<th>' + String(h).replace(/</g, '&lt;') + '</th>'; }).join('');
+    var dcell = function (h, x) { if (x === null || x === undefined) return '–'; if (typeof x !== 'number') return String(x).replace(/</g, '&lt;'); return (/%|margin|difference|benchmark/i.test(h) && !/total/i.test(h) && Math.abs(x) <= 1.5) ? pct(x, 2) : fmt(x); };
     $('dashBody').innerHTML = (d.dashboard || []).map(function (a) {
-      var tot = a.area === '8th District';
-      return '<tr' + (tot ? ' style="font-weight:700"' : '') + '><td>' + a.area + '</td><td>' + pct(a.benchmarkPct, 2) + '</td><td class="d">' + fmt(a.kmr) + '</td><td class="r">' + fmt(a.smith) + '</td><td>' + fmt(a.third) + '</td><td>' + (a.kmr + a.smith + a.third ? marginText(a.marginPct) : '–') + '</td><td class="' + (a.benchDiff === null ? 'na' : paceClass(a.benchDiff)) + '">' + (a.benchDiff === null ? '–' : pts(a.benchDiff) + ' pts') + '</td><td class="sub">' + a.reported + '/' + a.precincts + '</td></tr>';
-    }).join('');
+      var tot = /8th district/i.test(a.area);
+      return '<tr' + (tot ? ' style="font-weight:700"' : '') + '>' + a.cells.map(function (x, k) {
+        var h = DH[k] || ''; var cls = '';
+        if (k > 0 && typeof x === 'number') { if (/^kmr total/i.test(h)) cls = ' class="d"'; else if (/total$/i.test(h) && !/kmr|3rd|third/i.test(h)) cls = ' class="r"'; else if (/margin|difference/i.test(h)) cls = ' class="' + (x >= 0 ? 'ahead' : 'behind') + '"'; }
+        return '<td' + cls + '>' + (k === 0 ? String(x).replace(/</g, '&lt;') : dcell(h, x)) + '</td>';
+      }).join('') + '</tr>';
+    }).join('') || '<tr><td colspan="8" class="sub">' + (d.sheet && d.sheet.dashboardNote ? d.sheet.dashboardNote : 'No rows found in the dashboard tab.') + '</td></tr>';
     // tape precincts
     var tb = '', tapesIn = 0, tapesAll = 0;
     (d.tapes || []).forEach(function (t) {
@@ -283,7 +287,7 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
       tb += '<tr' + (t.reported ? '' : ' class="dim"') + '><td>' + t.name + (t.found < t.expected ? ' <span class="sub">(' + t.missing.length + ' row' + (t.missing.length > 1 ? 's' : '') + ' not found: ' + t.missing.join(', ') + ')</span>' : '') + '</td><td>' + t.tapesIn + '/' + t.expected + '</td><td>' + t.avIn + '/' + t.expected + '</td><td class="d">' + pct(t.kmrShare) + '</td><td>' + (t.reported ? marginText(t.marginPct) : '–') + '</td><td class="' + (t.benchDiff === null ? 'na' : paceClass(t.benchDiff)) + '">' + (t.benchDiff === null ? '–' : pts(t.benchDiff) + ' pts' + (edOnly ? ' <span class="sub">E-Day only</span>' : '')) + '</td></tr>';
     });
     $('tapeBody').innerHTML = tb;
-    setText('tapeHint', tapesIn + ' of ' + tapesAll + ' route precincts have an E-Day number in the sheet. Benchmark comp. = the sheet\'s column V (KMR % minus win-number %) over those rows; "E-Day only" until the county posts absentee.');
+    setText('tapeHint', tapesIn + ' of ' + tapesAll + ' route precincts have an E-Day number in the sheet. The sheet has no row for these groups, so the board adds the sheet\'s own row totals (KMR Total, Smith Total, 3rd party, win number, estimated votes) over each route\'s precincts and applies the sheet\'s formulas to the sum: KMR % = KMR \u00f7 all votes; Benchmark comp. = KMR % minus win number \u00f7 estimated votes. "E-Day only" until the county posts absentee.');
     // watch races
     $('watchBody').innerHTML = (d.leg || []).filter(function (g) { return g.watch; }).map(function (g) {
       var s0 = g.summary || {};
@@ -297,16 +301,12 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
       lb += '<tr>' + '<td>' + (g.watch ? '\u2605 ' : '') + (g.chamber === 'US House' ? 'US House ' : g.chamber === 'State Senate' ? 'Senate ' : 'House ') + g.district + '</td><td class="d">' + (s0.dem || '–') + ' <span class="sub">' + fmt(s0.demVotes) + '</span></td><td class="r">' + (s0.rep || '–') + ' <span class="sub">' + fmt(s0.repVotes) + '</span></td><td>' + (s0.total ? marginText(s0.marginPct) : '–') + '</td><td>' + pct(s0.demPct) + '</td><td class="sub">' + g.precinctsReporting + '/' + g.precinctsTotal + '</td><td class="sub">' + (g.countyNames || []).join(', ') + '</td></tr>';
     });
     $('legBody').innerHTML = lb || '<tr><td colspan="7" class="sub">No state-legislature results posted by any county yet.</td></tr>';
-    // projection
-    var P = d.projection;
-    if (P && P.available) { $('projBig').className = 'big ' + (P.marginPct > 0 ? 'dem' : P.marginPct < 0 ? 'rep' : ''); setText('projBig', marginText(P.marginPct)); setText('projRange', 'range ' + marginText(P.low) + ' to ' + marginText(P.high)); setText('projFine', P.pctEstComplete >= 0.995 ? 'All expected vote is complete: this is the counted margin.' : 'Projection, not a result. Based on ' + pct(P.pctEstComplete, 0) + ' of expected vote complete; outstanding precincts at their benchmark plus observed county pace.' + (P.borrowed && P.borrowed.length ? ' Borrowed district pace for ' + P.borrowed.join(', ') + '.' : '') + (P.note ? ' ' + P.note : '')); }
-    else { $('projBig').className = 'big na'; setText('projBig', 'Not enough complete vote yet'); setText('projRange', ''); setText('projFine', 'Appears once 25% of the expected vote is complete (now ' + pct(P ? P.pctEstComplete : 0, 0) + '). Projection, not a result.'); }
     // ticket
     var T = D.ticket, tr = '';
     var row = function (name, m, dName, rName) { var dsh = m === null ? 0 : (1 + m) / 2; return '<div class="row"><span>' + name + '</span><div class="split"><div class="d" style="width:' + (dsh * 100) + '%"></div><div class="r" style="width:' + ((1 - dsh) * 100) + '%"></div><div class="tick"></div></div><span class="m">' + marginText(m) + '</span></div>'; };
     tr += row('House', T.rows ? T.kmr : null) + row(N.govRace, T.rows ? T.benson : null) + row('Senate', T.rows ? T.elsayed : null);
     $('ticketRows').innerHTML = tr;
-    setText('ticketCmp', T.rows ? ('KMR vs ' + N.gov + ' ' + pts(T.kmr - T.benson) + ' · KMR vs ' + N.sen + ' ' + pts(T.kmr - T.elsayed) + ' (two-party margins, same complete precincts).') : 'Shown once complete precincts carry all three races.');
+    setText('ticketCmp', T.rows ? ('KMR vs ' + N.gov + ' ' + pts(T.kmr - T.benson) + ' · KMR vs ' + N.sen + ' ' + pts(T.kmr - T.elsayed) + ' pts. Each margin is the sheet\'s own "Difference" column (House, ' + N.govRace + ', Senate) in the "8th District / Total" row.') : 'Shown once the sheet\'s "8th District / Total" row carries all three races\' Difference cells.');
     // alerts: two full lines, then a count chip
     var AL = d.alerts || [];
     $('alerts').innerHTML = AL.slice(0, 2).map(function (a) { return '<div class="alert ' + a.level + '" title="' + a.text.replace(/"/g, '&quot;') + '"><span class="ico">⚠</span><span>' + a.text.replace(/</g, '&lt;') + '</span></div>'; }).join('') + (AL.length > 2 ? '<div class="alert more" title="' + AL.slice(2).map(function (a) { return a.text; }).join('\n').replace(/"/g, '&quot;') + '"><span>+' + (AL.length - 2) + ' more (hover)</span></div>' : '');
@@ -314,6 +314,7 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
     var fc = d.counties.map(function (c) { var f = d.health.fresh[c.name] || {}; var m = f.changeAgeMin === null ? f.postAgeMin : f.changeAgeMin; return '<span class="chip"><span class="dot ' + ageDot(m) + '"></span>' + c.name + ' ' + (m === null ? 'no post yet' : (f.changedAt ? 'changed ' + m + 'm ago' : 'posted ' + m + 'm ago')) + '</span>'; }).join('');
     fc += '<span class="chip">' + (d.health.relayAlive ? '● Pipeline OK' : '○ Pipeline not heard from (' + (d.health.heartbeatAgeMin === null ? 'never' : d.health.heartbeatAgeMin + ' min') + ')') + '</span>';
     fc += '<span class="chip">Tape flags: ' + d.health.tapeMismatches + ' mismatch / ' + d.health.tapeFlags + ' total</span>';
+    fc += '<span class="chip">Every figure is a cell of the tracker (' + ((d.sheet && d.sheet.tab) || 'tracker tab') + ' totals rows and the E-Night Dashboard tab); the board only counts rows, as marked</span>';
     $('footer').innerHTML = fc;
     setText('updated', 'Updated ' + d.generatedLocal);
     lastTs = d.generatedLocal; prev = d;
