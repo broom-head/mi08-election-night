@@ -53,7 +53,7 @@ details summary{cursor:pointer;color:var(--t2);font-weight:600}
 <div class="step"><b>1. The counties publish results</b><small>Each county clerk posts election-night numbers on its own website, in its own format. Saginaw, Midland, Genesee, Oakland and Macomb use results websites that also publish the numbers as a <em>machine-readable data file</em> (called JSON: the same numbers a person sees on the page, but in a form a program can read exactly). Tuscola posts a <em>plain web page</em> (HTML) with a table of precinct results. Bay posts a <em>PDF</em> with every precinct, the kind of document a clerk prints.</small></div>
 <div class="step"><b>2. A laptop collects them</b><small>A small program on John's laptop (the <em>relay</em>) visits every county site once a minute, the way a browser would, keeps only what has changed since last time, and sends it all in one package to the poller. On election night the Mac's scheduler (launchd) starts it automatically every minute. Pressing <em>Run now</em> below asks for an extra pass right away.</small></div>
 <div class="step"><b>3. The poller writes the input sheet</b><small>The <em>poller</em> is a Google Apps Script, a program that lives inside Google and is allowed to edit the <em>input sheet</em> (John's copy of the tracker). It reads each county's numbers, matches each county precinct to its row on the tracker tab and on the State Leg Races tab, writes election-day, absentee and early-vote counts for each candidate, then <em>re-reads every cell it wrote</em> to confirm it landed. Numbers typed by hand from tapes are never overwritten. Every run is written to a log sheet.</small></div>
-<div class="step"><b>4. The results sheet and the board update</b><small>Volunteers' tape photos are typed into Stephen's sheet (the <em>results sheet</em>); John checks the county pulls here and pastes them into it. Its own formulas (benchmarks, dashboard, margins) recalculate as cells land, and the results board reads that sheet every minute and shows the same numbers in a bigger, clearer form. (When no separate results sheet is set, the board reads the input sheet.)</small></div>
+<div class="step"><b>4. Tapes, the sheet and the board</b><small>Volunteers' tape photos are uploaded below and read into the same input sheet, into the E-Day (Tapes) cells, so the county figure and the tape can be compared cell by cell. The sheet's own formulas (benchmarks, dashboard, margins) recalculate as cells land, and the results board reads it every minute and shows the same numbers in a bigger, clearer form. Tonight this whole process runs in parallel to the hand-typed sheet, as a test; nothing here touches that sheet.</small></div>
 </div></section>
 
 <section class="card"><h2>Run and status</h2>
@@ -78,6 +78,17 @@ details summary{cursor:pointer;color:var(--t2);font-weight:600}
 <div class="hint" id="srcHint"></div>
 </section>
 
+
+<section class="card" id="tapes"><h2>Tape photos</h2>
+<div class="hint" style="margin:0 0 10px">Photograph each precinct results tape (election-day tape from the tabulator). Each photo is read by Claude and the numbers land in the input sheet exactly where a typist would put them: the E-Day (Tapes) cells and third-party cells on the tracker tab, and the same cells on the State Leg Races tab. A tape never overwrites a different tape value already in the cell (that is flagged). When the county later posts that precinct, its figure is compared to the tape on the log's "Tape vs County" tab, never written over it. Needs the admin key below. Photos are kept in the Drive folder "MI-08 tape photos".</div>
+<div class="admin">
+  <label>Photos</label><input id="tapeFiles" type="file" accept="image/*" multiple><button class="small" id="tapeGo" type="button">Read and write</button>
+  <label>Precinct (optional)</label><input id="tapeHint" placeholder="only if the tape does not say: e.g. Genesee, Flint Township, Precinct 2  or  Flint, Ward 7, Precinct 21"><span></span>
+  <small>Long tapes: photograph them in sections; every section is read on its own, and the precinct box above tells the reader where a section without a header belongs. AV counting-board tapes are refused (those columns come from the county).</small>
+</div>
+<div class="status" id="tapeStatus" style="margin-top:8px"></div>
+<div id="tapeList" class="plain" style="margin-top:8px"></div>
+</section>
 
 <section class="card" id="settings"><h2>Settings: the input sheet and the sources</h2>
 <div class="hint" style="margin:0 0 12px">Changing anything here needs the admin key (the token at the end of John's run-now bookmark). The key stays in this browser only. Changes take effect at once: the poller or the board switches sheets immediately, and the laptop relay picks up a new source on its next check-in (within a minute).</div>
@@ -172,6 +183,36 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
   };
   $('setSheet').onclick = function () { adminCall('consoleSetSheet', [$('key').value, $('sheetRef').value]); };
   $('setBoard').onclick = function () { adminCall('consoleSetBoardSheet', [$('key').value, $('boardRef').value]); };
+  // tape photos: shrink in the browser (long edge 2200 px, JPEG), send one at a time, show each result
+  var shrink = function (file) { return new Promise(function (resolve, reject) { var img = new Image(); var url = URL.createObjectURL(file); img.onload = function () { var sc = Math.min(1, 2200 / Math.max(img.width, img.height)); var cv = document.createElement('canvas'); cv.width = Math.round(img.width * sc); cv.height = Math.round(img.height * sc); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url); resolve(cv.toDataURL('image/jpeg', 0.85).split(',')[1]); }; img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('not an image')); }; img.src = url; }); };
+  var tapeCall = function (name, b64, hint) {
+    var args = [$('key').value, name, 'image/jpeg', b64, hint];
+    if (inApps) return new Promise(function (resolve, reject) { google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).consoleTape.apply(null, args); });
+    return apiPost({ api: 'tape', key: args[0], name: name, mime: 'image/jpeg', data: b64, hint: hint });
+  };
+  var tapeRow = function (r, name) {
+    var cls = r.status === 'WRITTEN' ? 'ok' : r.status === 'CONFLICT' || r.status === 'ERROR' ? 'bad' : 'warn';
+    var lines = [esc(r.message || '')];
+    (r.written || []).forEach(function (x) { lines.push('wrote ' + esc(x)); });
+    (r.conflicts || []).forEach(function (x) { lines.push('conflict: ' + esc(x)); });
+    (r.skipped || []).forEach(function (x) { lines.push('skipped: ' + esc(x)); });
+    (r.warnings || []).forEach(function (x) { lines.push('note: ' + esc(x)); });
+    return '<div class="row ' + cls + '"><div class="t">' + esc(name) + (r.photoUrl ? '<br><a href="' + esc(r.photoUrl) + '" target="_blank" style="color:var(--accent)">photo</a>' : '') + '</div><div>' + lines.join('<br>') + '</div></div>';
+  };
+  $('tapeGo').onclick = function () {
+    var files = Array.prototype.slice.call($('tapeFiles').files || []);
+    if (!files.length) { $('tapeStatus').textContent = 'Choose one or more photos first.'; $('tapeStatus').className = 'status bad'; return; }
+    if (!$('key').value) { $('tapeStatus').textContent = 'Paste the admin key in Settings first.'; $('tapeStatus').className = 'status bad'; return; }
+    $('tapeGo').disabled = true; var i = 0;
+    var next = function () {
+      if (i >= files.length) { $('tapeGo').disabled = false; $('tapeStatus').textContent = 'Done: ' + files.length + ' photo(s).'; $('tapeStatus').className = 'status ok'; setTimeout(load, 1000); return; }
+      var f = files[i++]; $('tapeStatus').textContent = 'Reading ' + f.name + ' (' + i + ' of ' + files.length + ')\u2026 about 20 seconds each'; $('tapeStatus').className = 'status run';
+      shrink(f).then(function (b64) { return tapeCall(f.name, b64, $('tapeHint').value); })
+        .then(function (r) { $('tapeList').insertAdjacentHTML('afterbegin', tapeRow(r, f.name)); next(); })
+        .catch(function (e) { $('tapeList').insertAdjacentHTML('afterbegin', tapeRow({ status: 'ERROR', message: 'Failed: ' + (e && e.message ? e.message : e) }, f.name)); next(); });
+    };
+    next();
+  };
   $('setOv').onclick = function () { adminCall('consoleSetOverrides', [$('key').value, { bay_pdf: $('ovBay').value, tuscola: $('ovTuscola').value, genesee: $('ovGenesee').value, saginaw_election: $('ovSaginaw').value, midland_election: $('ovMidland').value }]); };
   load(); setInterval(load, 30000);
 })();
