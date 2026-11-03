@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MI-08 Sheet Check</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#0f1218;--surface:#171b24;--surface2:#1f2530;--border:#2a303d;--t1:#eef0f4;--t2:#9aa3b2;--t3:#6b7383;--dem:#4f8bff;--rep:#f0605a;--ok:#4fc3a1;--warn:#e0b14a;--bad:#f0605a;--accent:#4f8bff;--mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;color-scheme:dark}
+:root[data-theme="light"]{--bg:#f4f5f8;--surface:#fff;--surface2:#eef0f4;--border:#dcdfe6;--t1:#14171f;--t2:#5a6170;--t3:#8a91a0;--dem:#1f5fbf;--rep:#c23b3b;--ok:#1e8a4c;--warn:#b7791f;--bad:#c23b3b;--accent:#1f5fbf;color-scheme:light}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--t1)}body{font:15px/1.5 'IBM Plex Sans',system-ui,sans-serif;padding:24px max(16px,env(safe-area-inset-right,0px)) 48px max(16px,env(safe-area-inset-left,0px))}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:18px}
+h1{font-size:26px;margin:0;letter-spacing:-.01em}h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--t2);margin:0 0 10px}
+.hdr{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}.sub{color:var(--t2);max-width:70ch}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+.form{display:grid;grid-template-columns:130px 1fr;gap:10px 12px;align-items:center}.form input{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--t1);font:13px var(--mono)}
+.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px}
+button{padding:10px 16px;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;font:600 15px 'IBM Plex Sans',sans-serif;cursor:pointer}button[disabled]{opacity:.5;cursor:wait}button.ghost{background:transparent;color:var(--t1);border-color:var(--border)}button.small{padding:6px 10px;font-size:13px}
+label.chk{display:flex;gap:6px;align-items:center;color:var(--t2);font-size:14px}
+.status{font-weight:600}.status.ok{color:var(--ok)}.status.bad{color:var(--bad)}.status.run{color:var(--warn)}
+.verdict{font-size:30px;font-weight:700;margin:4px 0 2px}.verdict.ok{color:var(--ok)}.verdict.bad{color:var(--bad)}.verdict.na{color:var(--t3)}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:10px}
+.sheet{border:1px solid var(--border);border-radius:10px;padding:12px 14px;background:var(--surface2)}.sheet .n{font-weight:600;margin-bottom:6px;word-break:break-word}.sheet .who{font-size:12px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em}
+.kv{display:grid;grid-template-columns:1fr auto;gap:2px 12px;font-size:14px}.kv b{font-weight:600}.kv .d{color:var(--dem)}.kv .r{color:var(--rep)}
+table{width:100%;border-collapse:collapse}th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--t2);padding:6px 8px;border-bottom:1px solid var(--border)}td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top;font-variant-numeric:tabular-nums}td.num{text-align:right;font-family:var(--mono);font-size:13px}
+tr.minor td{color:var(--t3)}td.neg{color:var(--rep)}td.pos{color:var(--dem)}
+.hint{color:var(--t2);font-size:13px;margin-top:8px}.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--border);color:var(--t2);margin-left:6px}
+.list{font:13px var(--mono);color:var(--t2);white-space:pre-wrap;word-break:break-word}
+@media (max-width:640px){.form{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="hdr">
+  <div><h1>MI-08 sheet check</h1><div class="sub">Compares two copies of the election-night tracker cell by cell: every candidate's E-Day (Tapes), AV and Early cells and the third-party cells, on the tracker tab and the State Leg Races tab, row by row. Read only; nothing is written to either sheet.</div></div>
+  <div><button class="ghost small" id="theme" type="button">Light mode</button></div>
+</div>
+
+<section class="card">
+<div class="form">
+  <label>Your sheet (A)</label><input id="a" placeholder="paste the link of your copy">
+  <label>Stephen's sheet (B)</label><input id="b" placeholder="paste the link of the hand-typed sheet">
+</div>
+<div class="bar"><button id="go" type="button">Check now</button><label class="chk"><input type="checkbox" id="auto"> re-check every minute</label><label class="chk"><input type="checkbox" id="hideMinor" checked> hide blank-vs-0</label><span class="status" id="status"></span></div>
+<div class="hint">Both links are remembered in this browser. The check runs through the poller, which reads both sheets as its own account (it needs view access to each). A row is matched by County, Muni and Precinct.</div>
+</section>
+
+<section class="card" id="result" style="display:none">
+<div class="verdict na" id="verdict">&nbsp;</div>
+<div class="hint" id="counts"></div>
+<div class="sum" id="sum"></div>
+</section>
+
+<section class="card" id="diffs" style="display:none">
+<h2>Cells that differ</h2>
+<div id="tables"></div>
+</section>
+</div>
+<script>
+window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR05x0ZJX5lozPEt4mg5apxmh-ATexH_06JlF2bbmP7mWTi5y2Psg/exec';
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s === null || s === undefined ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
+  var fmt = function (n) { return (n === null || n === undefined || isNaN(n)) ? '–' : Math.round(n).toLocaleString('en-US'); };
+  var pct = function (x) { return (x === null || x === undefined || isNaN(x)) ? '–' : (x * 100).toFixed(2) + '%'; };
+  var cell = function (v) { return v === null || v === undefined ? '<span style="color:var(--t3)">blank</span>' : esc(typeof v === 'number' ? v.toLocaleString('en-US') : v); };
+  var setTheme = function (t) { document.documentElement.setAttribute('data-theme', t); $('theme').textContent = t === 'light' ? 'Dark mode' : 'Light mode'; try { localStorage.setItem('cmpTheme', t); } catch (e) {} };
+  try { setTheme(localStorage.getItem('cmpTheme') === 'light' ? 'light' : 'dark'); } catch (e) { setTheme('dark'); }
+  $('theme').onclick = function () { setTheme(document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light'); };
+  try { $('a').value = localStorage.getItem('cmpA') || ''; $('b').value = localStorage.getItem('cmpB') || ''; $('auto').checked = localStorage.getItem('cmpAuto') === '1'; } catch (e) {}
+  var API = (function () { try { return new URLSearchParams(location.search).get('api') || window.DEFAULT_API; } catch (e) { return window.DEFAULT_API; } })();
+  var last = null, timer = null;
+  function sheetCard(who, s, d) {
+    return '<div class="sheet"><div class="who">' + who + '</div><div class="n">' + esc(s.name || s.id) + '</div>' + (d ? '<div class="kv">' +
+      '<span>McDonald Rivet</span><b class="d">' + fmt(d.kmr) + '</b><span>Smith</span><b class="r">' + fmt(d.smith) + '</b><span>3rd party</span><b>' + fmt(d.third) + '</b>' +
+      '<span>Margin</span><b>' + (d.marginPct === null ? '–' : (d.marginPct >= 0 ? 'D' : 'R') + '+' + Math.abs(d.marginPct * 100).toFixed(2)) + '</b><span>Benchmark comparison</span><b>' + pct(d.benchComp) + '</b>' +
+      '<span>Precincts with votes</span><b>' + fmt(d.reported) + '</b><span>Precincts with absentee</span><b>' + fmt(d.avIn) + '</b></div>' + (d.fromSheet ? '' : '<div class="hint">8th District / Total row not found</div>') : '<div class="hint">totals not read</div>') + '</div>';
+  }
+  function render(r) {
+    last = r;
+    $('result').style.display = ''; $('diffs').style.display = '';
+    if (!r.ok) { $('verdict').textContent = r.message; $('verdict').className = 'verdict bad'; $('counts').textContent = ''; $('sum').innerHTML = ''; $('tables').innerHTML = ''; return; }
+    var hide = $('hideMinor').checked;
+    var all = [], shown = 0, rows = 0, cells = 0, problems = [];
+    r.tabs.forEach(function (t) { if (t.error) problems.push(t.tab + ': ' + t.error); rows += t.rows; cells += t.cells; t.diffs.forEach(function (d) { all.push(d); if (!(hide && d.minor)) shown++; }); });
+    var major = all.filter(function (d) { return !d.minor; }).length, minor = all.length - major;
+    if (problems.length) { $('verdict').textContent = 'Could not compare: ' + problems.join(' | '); $('verdict').className = 'verdict bad'; }
+    else if (!major) { $('verdict').textContent = 'No discrepancies' + (minor ? ' (' + minor + ' blank-vs-0 only)' : ''); $('verdict').className = 'verdict ok'; }
+    else { $('verdict').textContent = major + ' cell' + (major > 1 ? 's' : '') + ' differ' + (major > 1 ? '' : 's') + (minor ? ' (+' + minor + ' blank-vs-0)' : ''); $('verdict').className = 'verdict bad'; }
+    $('counts').textContent = 'Checked ' + rows.toLocaleString('en-US') + ' matching rows, ' + cells.toLocaleString('en-US') + ' cells, at ' + r.generatedLocal + '.';
+    var sm = r.summary || {};
+    $('sum').innerHTML = sheetCard('A · yours', r.a, sm.a) + sheetCard('B · Stephen\'s', r.b, sm.b);
+    var h = '';
+    r.tabs.forEach(function (t) {
+      var list = t.diffs.filter(function (d) { return !(hide && d.minor); });
+      h += '<h2 style="margin-top:14px">' + esc(t.tab) + ' tab <span class="pill">' + t.rows + ' rows matched</span>' + (t.columns ? '<span class="pill">' + t.columns + ' columns</span>' : '') + '</h2>';
+      if (t.error) { h += '<div class="hint">' + esc(t.error) + '</div>'; return; }
+      if (!list.length) h += '<div class="hint">No differences' + (t.diffs.length ? ' beyond blank-vs-0' : '') + '.</div>';
+      else h += '<table><thead><tr><th>County</th><th>Muni</th><th>Precinct</th><th>Column</th><th style="text-align:right">A · yours</th><th style="text-align:right">B · Stephen\'s</th><th style="text-align:right">A − B</th></tr></thead><tbody>' +
+        list.map(function (d) { return '<tr' + (d.minor ? ' class="minor"' : '') + '><td>' + esc(d.county) + '</td><td>' + esc(d.muni) + '</td><td>' + esc(d.label) + '</td><td>' + esc(d.header) + '</td><td class="num">' + cell(d.a) + '</td><td class="num">' + cell(d.b) + '</td><td class="num ' + (d.diff === null ? '' : d.diff > 0 ? 'pos' : d.diff < 0 ? 'neg' : '') + '">' + (d.diff === null ? '–' : (d.diff > 0 ? '+' : '') + d.diff.toLocaleString('en-US')) + '</td></tr>'; }).join('') + '</tbody></table>';
+      if (t.onlyA && t.onlyA.length) h += '<div class="hint">Rows only in A (' + t.onlyA.length + '): <span class="list">' + esc(t.onlyA.slice(0, 20).join('; ')) + (t.onlyA.length > 20 ? ' …' : '') + '</span></div>';
+      if (t.onlyB && t.onlyB.length) h += '<div class="hint">Rows only in B (' + t.onlyB.length + '): <span class="list">' + esc(t.onlyB.slice(0, 20).join('; ')) + (t.onlyB.length > 20 ? ' …' : '') + '</span></div>';
+      if (t.duplicates && t.duplicates.length) h += '<div class="hint">Labels that appear twice in A, compared once: ' + esc(t.duplicates.join('; ')) + '</div>';
+    });
+    $('tables').innerHTML = h;
+  }
+  function check() {
+    var a = $('a').value.trim(), b = $('b').value.trim();
+    if (!a || !b) { $('status').textContent = 'Paste both links first.'; $('status').className = 'status bad'; return; }
+    try { localStorage.setItem('cmpA', a); localStorage.setItem('cmpB', b); } catch (e) {}
+    $('go').disabled = true; $('status').textContent = 'Checking…'; $('status').className = 'status run';
+    fetch(API + '?api=compare&a=' + encodeURIComponent(a) + '&b=' + encodeURIComponent(b) + '&_=' + Date.now(), { credentials: 'omit' })
+      .then(function (r) { return r.json(); })
+      .then(function (r) { render(r); $('status').textContent = r.ok ? 'Done ' + r.generatedLocal : ''; $('status').className = 'status ' + (r.ok ? 'ok' : 'bad'); })
+      .catch(function (e) { $('status').textContent = 'Check failed: ' + e; $('status').className = 'status bad'; })
+      .then(function () { $('go').disabled = false; });
+  }
+  $('go').onclick = check;
+  $('hideMinor').onchange = function () { if (last) render(last); };
+  var setAuto = function () { if (timer) clearInterval(timer); timer = null; if ($('auto').checked) timer = setInterval(check, 60000); try { localStorage.setItem('cmpAuto', $('auto').checked ? '1' : '0'); } catch (e) {} };
+  $('auto').onchange = setAuto; setAuto();
+  if ($('a').value && $('b').value) check();
+})();
+</script>
+</body>
+</html>
