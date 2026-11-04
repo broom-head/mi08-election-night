@@ -174,13 +174,14 @@ body:not(.tv) .footer{font-size:13px;gap:8px 18px;margin-top:16px}
     </section>
     <section class="card">
       <div class="label">Vote counted vs expected</div>
-      <div class="barline"><span><span id="repN">0</span> of <span id="repT">277</span> precincts reported</span><span id="repPct">0%</span></div>
+      <div class="barline"><span>Votes counted so far</span><span id="repPct">0% of expected</span></div>
       <div class="bar"><div id="repBar" style="width:0"></div></div>
-      <div class="barline"><span>Absentee in</span><span id="cmpPct">0 precincts</span></div>
+      <div class="barline"><span><span id="repN">0</span> of <span id="repT">277</span> precincts have numbers</span><span id="fullPct"><span id="fullN">0</span> full · <span id="partN">0</span> partial</span></div>
       <div class="bar thin"><div id="cmpBar" style="width:0"></div></div>
+      <div class="fine" id="fullFine"></div>
       <div class="fine" id="avBoards">AV boards posted: 0 of 4</div>
       <div class="fine" id="byType"></div>
-      <div class="fine">Row counts from the sheet: "reported" = the row has votes in it; "absentee in" = an AV cell is filled; "expected vote" = the sheet's Total Estimated Votes column. "Counted by type" adds the sheet's E-Day, AV and Early cells.</div>
+      <div class="fine">From the sheet's rows: "votes counted" adds each row's votes (capped at its Total Estimated Votes) against the district's expected total; a precinct is "full" when its election-day and absentee cells are both in, "partial" when only some vote types have landed (early or absentee only, or election-day only). "Counted by type" adds the sheet's E-Day, AV and Early cells.</div>
     </section>
     <section class="reassure" id="reassure"><b>Reported &ne; complete.</b> Absentee ballots are counted last and lean Democratic. In 2024 the election-day count alone read <b>R+2.6</b> across this district; the certified final was <b>Rivet +6.7</b>. Judge tonight by the Benchmark Comparison.</section>
   </div>
@@ -249,8 +250,10 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
     var mk = $('paceMark'); if (D.benchComp !== null) { mk.style.display = ''; mk.style.left = (50 + Math.max(-10, Math.min(10, D.benchComp * 100)) * 5) + '%'; mk.className = 'mark ' + paceClass(D.benchComp); } else mk.style.display = 'none';
     setText('paceFine', (D.benchComp !== null ? ('KMR ' + pct(D.kmrShare) + ' of the vote counted vs a win number of ' + pct(D.benchPct) + ', both from the "8th District / Total" row. ') : '') + 'The sheet\'s Benchmark Comparison (column V): KMR % minus her win-number %. Reads low until absentee is in; nothing is held back or adjusted.');
     // counted vs expected
-    setText('repN', D.reported); setText('repT', D.precincts); setText('repPct', pct(D.pctEstReported, 0) + ' of expected vote');
-    $('repBar').style.width = (100 * (D.pctEstReported || 0)) + '%'; setText('cmpPct', D.avIn + ' of ' + D.precincts + ' precincts'); $('cmpBar').style.width = (100 * (D.precincts ? D.avIn / D.precincts : 0)) + '%';
+    setText('repN', D.reported); setText('repT', D.precincts); setText('repPct', pct(D.pctVotesCounted, 0) + ' of expected');
+    $('repBar').style.width = (100 * (D.pctVotesCounted || 0)) + '%';
+    setText('fullN', D.full); setText('partN', D.partial); $('cmpBar').style.width = (100 * (D.precincts ? D.full / D.precincts : 0)) + '%';
+    setText('fullFine', 'Full = election-day and absentee both in (' + pct(D.pctEstFull, 0) + ' of expected vote). Partial = some vote types still to come. ' + (D.precincts - D.reported) + ' precincts have nothing yet.');
     var posted = d.avBoards.filter(function (b) { return b.posted; });
     setText('avBoards', 'AV boards posted: ' + posted.length + ' of ' + d.avBoards.length + (posted.length ? ' (' + posted.map(function (b) { return b.name; }).join(', ') + ')' : '') + (posted.length < d.avBoards.length ? ' · not in: ' + d.avBoards.filter(function (b) { return !b.posted; }).map(function (b) { return b.name; }).join(', ') : ''));
     setText('byType', D.votes ? ('Counted by type: E-Day ' + fmt(D.ed) + ' · absentee ' + fmt(D.av) + ' · early ' + fmt(D.ev) + (D.tapeOnly ? ' · ' + D.tapeOnly + ' precincts are tape-only (E-Day, nothing else yet)' : '')) : '');
@@ -263,7 +266,7 @@ window.DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxo4gaM0KKRUcjsyXR
         '<div class="shares"><span class="d">' + pct(c.kmrShare) + '</span><span class="r">' + pct(c.smithShare) + '</span></div>' +
         '<div class="m">' + (c.fromSheet === false ? 'total row not found in the sheet' : c.reported && c.marginPct !== null ? marginText(c.marginPct) + ' · ' + (c.marginVotes >= 0 ? 'KMR +' : N.rep + ' +') + fmt(Math.abs(c.marginVotes)) : 'no returns yet') + '</div>' +
         '<div class="pc ' + (c.benchComp === null ? 'na' : paceClass(c.benchComp)) + '">' + (c.benchComp === null ? 'benchmark comp.: nothing yet' : (c.benchComp >= 0 ? '▲ ' : '▼ ') + pts(c.benchComp) + ' pts vs win pace (sheet)') + '</div>' +
-        '<div class="rep">' + c.reported + '/' + c.precincts + ' reported · ' + c.avIn + ' with absentee · ' + pct(c.pctEstReported, 0) + ' of est. vote' + (stale ? ' · ⏱ no change ' + f.changeAgeMin + ' min' : '') + '</div>' +
+        '<div class="rep">' + c.full + ' full · ' + c.partial + ' partial · ' + (c.precincts - c.reported) + ' blank of ' + c.precincts + ' · ' + pct(c.pctVotesCounted, 0) + ' of est. vote counted' + (stale ? ' · ⏱ no change ' + f.changeAgeMin + ' min' : '') + '</div>' +
         (c.note && !c.reported ? '<div class="note">' + c.note + '</div>' : '') + '</section>';
     });
     $('counties').innerHTML = ch;
